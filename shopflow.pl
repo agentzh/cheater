@@ -17,20 +17,34 @@ view shopflow =>
     };
 
 my $data = run_view shopflow => 24;
-warn json($data);
+#warn json($data);
 
 write_php 'view-shopflow.php',
-    json($data),
-    when => {
-        day => regex('[02468]$'),
+    {
+        data => json(run_view shopflow => 24),
+        when => {
+            day => regex('[02468]$'),
+        }
+    },
+    {
+        data => json(run_view shopflow => 24),
+
     };
 
 write_php 'batch-shopflow.php',
-    json([
-        run_view(shopflow => 24),
-        run_view(shopflow => 24),
-    ]),
-    when => {
-        days => regex('[02468],'),
+    {
+        data => json([
+            run_view(shopflow => 24),
+            run_view(shopflow => 24),
+        ]),
+        when => {
+            days => regex('[02468]$'),
+        }
+    },
+    {
+        data => json([
+            run_view(shopflow => 24),
+            run_view(shopflow => 24),
+        ]),
     };
 

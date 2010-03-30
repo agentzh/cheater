@@ -3,6 +3,7 @@ package Cheater;
 use strict;
 use warnings;
 
+use Clone qw( clone );
 use String::Random;
 use JSON::Syck;
 
@@ -21,6 +22,7 @@ our %Views;
 
 sub apply_pattern ($$$);
 sub generate_row ($$$);
+sub generate_php_condition ($);
 
 sub view ($$@) {
     my $name = shift;
@@ -60,8 +62,10 @@ sub run_view ($$) {
 
     my @rows;
     for (1..$n) {
+        my $saved_ctx = clone($ctx);
         my $row = generate_row($ctx, $cols, $ensure);
         unless ($ensure->($row)) {
+            $ctx = $saved_ctx;
             redo;
         }
 
@@ -130,6 +134,62 @@ sub apply_pattern ($$$) {
 }
 
 sub write_php ($$@) {
+    my $file = shift;
+    my @branches = @_;
+
+    open my $out, ">$file" or
+        die "Cannot open $file for writing: $!\n";
+
+    print $out "<?php\n";
+
+    for my $branch (@branches) {
+        my $data = delete $branch->{data};
+        my $when = delete $branch->{when};
+
+        if (%$branch) {
+            croak "Unknown keys: ", join(', ', keys %$branch);
+        }
+
+        my $cond = generate_php_condition($when);
+
+        if ($cond) {
+            print $out "if ($cond) {\n";
+        }
+
+        print $out "    echo(", as_php_str($data), ");\n";
+        print $out "    exit;\n";
+
+        if ($cond) {
+            print $out "}\n";
+        }
+    }
+
+    print $out "?>\n";
+
+    close $out;
+
+    warn "Wrote $file\n";
+}
+
+sub generate_php_condition ($) {
+    my $when = shift;
+    my @prereqs;
+    while (my ($arg, $pat) = each %$when) {
+        my $var = '$_GET[' . as_php_str($arg) . ']';
+        if (ref $pat) {
+            my @args = @$pat;
+            my $op = shift @args;
+            if ($op eq 'regex') {
+                my $regex = "/$args[0]/";
+                push @prereqs, 'preg_match(' . as_php_str($regex) . ", $var)";
+
+            }
+        } else {
+            push @prereqs, "$var == " . as_php_str($pat);
+        }
+    }
+
+    return join ' && ', @prereqs;
 }
 
 sub json ($) {
@@ -139,6 +199,21 @@ sub json ($) {
 
 sub regex ($) {
     return ['regex', @_];
+}
+
+sub as_php_str ($) {
+    my $s = shift;
+    if (!defined $s) {
+        return '';
+    }
+
+    $s =~ s/\\/\\\\/g;
+    #$s =~ s/\$/\\\$/g;
+    $s =~ s/\t/\\t/g;
+    $s =~ s/\n/\\n/g;
+    $s =~ s/\r/\\r/g;
+    $s =~ s/'/\\'/g;
+    "'$s'";
 }
 
 1;
