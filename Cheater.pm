@@ -123,11 +123,11 @@ sub apply_pattern ($$$) {
             $ctx->{prev} = int(rand($to - $from) + $from);
         }
 
-        my $k = 1 + (rand(0.3) - 0.15);
+        #my $k = 1 + (rand(0.5) - 0.25);
 
-        my $cur = int($ctx->{prev} * $k);
+        my $cur = int(rand($to - $from) + $from);
 
-        $ctx->{prev} = $cur;
+        #$ctx->{prev} = $cur;
 
         return $cur;
     }
@@ -141,6 +141,8 @@ sub write_php ($$@) {
         die "Cannot open $file for writing: $!\n";
 
     print $out "<?php\n";
+
+    print $out "header('Content-Type: application/json');\n";
 
     for my $branch (@branches) {
         my $data = delete $branch->{data};
@@ -217,3 +219,4 @@ sub as_php_str ($) {
 }
 
 1;
+
