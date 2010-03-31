@@ -3,8 +3,9 @@ package Cheater;
 use strict;
 use warnings;
 
+#use Smart::Comments::JSON '###';
 use Clone qw( clone );
-use String::Random;
+use Parse::RandGen::Regexp;
 use JSON::Syck;
 
 use Carp qw( croak );
@@ -16,9 +17,15 @@ our @EXPORT = qw(
     run_view write_php
     json
     regex
+    empty any
 );
 
 our %Views;
+
+sub rand_regex ($) {
+    my $regex = shift;
+    Parse::RandGen::Regexp->new(qr/$regex/)->pick();
+}
 
 sub apply_pattern ($$$);
 sub generate_row ($$$);
@@ -131,9 +138,15 @@ sub apply_pattern ($$$) {
 
         return $cur;
     }
+
+    if ($op eq 'regex') {
+        my $pat = $args[0];
+
+        return rand_regex($pat);
+    }
 }
 
-sub write_php ($$@) {
+sub write_php ($@) {
     my $file = shift;
     my @branches = @_;
 
@@ -145,6 +158,7 @@ sub write_php ($$@) {
     print $out "header('Content-Type: application/json');\n";
 
     for my $branch (@branches) {
+        ### $branch
         my $data = delete $branch->{data};
         my $when = delete $branch->{when};
 
@@ -184,7 +198,10 @@ sub generate_php_condition ($) {
             if ($op eq 'regex') {
                 my $regex = "/$args[0]/";
                 push @prereqs, 'preg_match(' . as_php_str($regex) . ", $var)";
-
+            } elsif ($op eq 'any') {
+                # ignore it
+            } elsif ($op eq 'empty') {
+                push @prereqs, "empty($var)";
             }
         } else {
             push @prereqs, "$var == " . as_php_str($pat);
@@ -201,6 +218,14 @@ sub json ($) {
 
 sub regex ($) {
     return ['regex', @_];
+}
+
+sub empty () {
+    return ['empty', @_];
+}
+
+sub any () {
+    return ['any', @_];
 }
 
 sub as_php_str ($) {
