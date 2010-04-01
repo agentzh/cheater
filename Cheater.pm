@@ -13,7 +13,7 @@ use Carp qw( croak );
 use base 'Exporter';
 
 our @EXPORT = qw(
-    seq view is like line
+    seq view is like range
     run_view write_php
     json
     regex
@@ -49,8 +49,8 @@ sub seq (@) {
     return ['seq', @_];
 }
 
-sub line ($$) {
-    return ['line', @_];
+sub range ($$) {
+    return ['range', @_];
 }
 
 sub run_view ($$) {
@@ -110,20 +110,24 @@ sub apply_pattern ($$$) {
         $ctx->{i}++;
 
         if ($i >= @args) {
-            return $args[-1];
+            $i = $#args;
         }
 
         my $val = $args[$i];
 
         if (ref $val) {
             my $sub_ctx = ($ctx->{ctx} ||= {});
-            return apply_pattern($sub_ctx, $col, $val);
+            ### $val
+            my $sub_val = apply_pattern($sub_ctx, $col, $val);
+            ### $sub_val
+
+            return $sub_val;
         }
 
         return $val;
     }
 
-    if ($op eq 'line') {
+    if ($op eq 'range') {
         my ($from, $to) = @args;
 
         if (!defined $ctx->{prev}) {
@@ -144,6 +148,12 @@ sub apply_pattern ($$$) {
 
         return rand_regex($pat);
     }
+
+    if ($op eq 'empty') {
+        return undef;
+    }
+
+    die "Unknown operator: $op";
 }
 
 sub write_php ($@) {
@@ -158,7 +168,7 @@ sub write_php ($@) {
     print $out "header('Content-Type: application/json');\n";
 
     for my $branch (@branches) {
-        ### $branch
+        ## $branch
         my $data = delete $branch->{data};
         my $when = delete $branch->{when};
 

@@ -4,15 +4,25 @@ use strict;
 use warnings;
 
 use Cheater;
+use Data::Dumper;
 
 view shopflow =>
     cols => {
         hour => seq(0..23),
-        pv => line(0, 16000),
-        uv => line(0, 16000),
+        pv => seq(
+            range(0,16000),
+            range(0, 16000),
+            empty(),
+            range(0,16000),
+            0,
+            range(0, 16000),
+        ),
+        uv => range(0, 16000),
     },
     ensure => sub {
         my $r = shift;
+        !defined $r->{uv} or
+        !defined $r->{pv} or
         $r->{uv} <= $r->{pv};
     };
 
@@ -37,6 +47,9 @@ write_php 'batch-shopflow-hourly.php', @cases;
 sub gen_view_case {
     my $d = shift;
     my $data = run_view shopflow => 24;
+
+    #die Dumper($data);
+
     return {
         data => json($data),
         when => {

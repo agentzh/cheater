@@ -12,10 +12,10 @@ my $page_size = 25;
 view catflow =>
     cols => {
         cat => regex('((衬杉|彩电|冰箱|手表|闹钟|电脑|眼镜|图书)分类|限时(三|五|六|七)折区){1,4}'),
-        pv => line(0, 16000),
-        uv => line(0, 16000),
-        in => line(0, 2000),
-        out => line(0, 2000),
+        pv => range(0, 16000),
+        uv => range(0, 16000),
+        in => range(0, 2000),
+        out => range(0, 2000),
     },
     ensure => sub {
         my $r = shift;
