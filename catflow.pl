@@ -97,7 +97,7 @@ sub gen_case {
                 days => $days,
                 cat => $cat,
                 count => $count,
-                max => $max,
+                max_of => $max,
             },
         };
     }
