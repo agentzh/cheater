@@ -12,14 +12,16 @@ my $page_size = 25;
 view catflow =>
     cols => {
         cat => regex('((衬杉|彩电|冰箱|手表|闹钟|电脑|眼镜|图书)分类|限时(三|五|六|七)折区){1,4}'),
-        pv => range(0, 16000),
-        uv => range(0, 16000),
-        in => range(0, 2000),
-        out => range(0, 2000),
+        url => regex('http://cat\.taobao\.com/item/\d{3,6}'),
+        pv => seq(range(0, 16000), 0, empty(), range(0, 16000)),
+        uv => seq(range(0, 16000), 0, empty(), range(0, 16000)),
+        in => seq(range(0, 16000), 0, empty(), range(0, 2000)),
+        out => seq(range(0, 16000), 0, empty(), range(0, 2000)),
     },
     ensure => sub {
         my $r = shift;
-        $r->{uv} <= $r->{pv};
+        return !defined $r->{uv} || !defined $r->{pv}
+            || $r->{uv} <= $r->{pv};
     };
 
 my ($data, @cases);
@@ -88,7 +90,7 @@ sub gen_case {
         }
 
         if ($max) {
-            $info->{max} = max map { $_->{$max} } @$data;
+            $info->{max} = max map { $_->{$max} || 0 } @$data;
         }
 
         return {
@@ -104,7 +106,11 @@ sub gen_case {
 
     my $sign = $dir eq 'asc' ? 1 : -1;
 
-    @$data = sort { $sign * ($a->{$sort} <=> $b->{$sort}) } @$data;
+    @$data = sort {
+        my $va = $a->{$sort} || 0;
+        my $vb = $b->{$sort} || 0;
+        $sign * ($va <=> $vb)
+    } @$data;
 
     my @rows = @{$data}[$offset..($offset + $limit - 1)];
 
