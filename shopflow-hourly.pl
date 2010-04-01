@@ -16,22 +16,17 @@ view shopflow =>
         $r->{uv} <= $r->{pv};
     };
 
-my $data = run_view shopflow => 24;
 #warn json($data);
 
-write_php 'view-shopflow.php',
-    {
-        data => json(run_view shopflow => 24),
-        when => {
-            day => regex('[02468]$'),
-        }
-    },
-    {
-        data => json(run_view shopflow => 24),
+my @cases;
 
-    };
+for my $digit (0..9) {
+    push @cases, gen_case($digit);
+}
 
-write_php 'batch-shopflow.php',
+write_php 'view-shopflow-hourly.php', @cases;
+
+write_php 'batch-shopflow-hourly.php',
     {
         data => json([
             run_view(shopflow => 24),
@@ -47,4 +42,15 @@ write_php 'batch-shopflow.php',
             run_view(shopflow => 24),
         ]),
     };
+
+sub gen_case {
+    my $d = shift;
+    my $data = run_view shopflow => 24;
+    return {
+        data => json($data),
+        when => {
+            day => regex("$d\$"),
+        }
+    };
+}
 
