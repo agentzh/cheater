@@ -3,11 +3,11 @@
 use strict;
 use warnings;
 
+use POSIX qw( ceil );
 use Cheater;
 use List::Util qw( max );
 
 my $page_size = 25;
-my $pages = 8;
 
 view catflow =>
     cols => {
@@ -24,25 +24,47 @@ view catflow =>
 
 my ($data, @cases);
 
-gen_cases(empty());
-gen_cases(regex('\S'));
+my $first_time = 1;
+
+for my $d ('[13579]', '[02468]') {
+    my $pages = $first_time ? 0.3 : 8;
+
+    if ($first_time) {
+        $first_time = 0;
+    }
+
+    for my $cat (empty(), regex('\S')) {
+        gen_cases($pages, $cat, regex("$d\$"));
+    }
+}
 
 write_php 'view-catflow.php', @cases;
 
 sub gen_cases {
-    my $cat = shift;
+    my ($pages, $cat, $days) = @_;
 
-    $data = run_view catflow => $page_size * $pages;
+    my $n = int($page_size * $pages);
+
+    $data = run_view catflow => $n;
     #warn json($data);
 
     # my ($cat, $days, $offset, $limit, $sort, $dir) = @_;
 
-    for my $page (0..($pages - 1)) {
+    my $total_pages = ceil($pages);
+    for my $page (0..($total_pages - 1)) {
         my $offset = $page * $page_size;
+
+        my $limit;
+
+        if ($page == $total_pages - 1) {
+            $limit = $n - $offset;
+        } else {
+            $limit = $page_size;
+        }
 
         for my $dir (qw(asc desc)) {
             for my $col (qw(pv uv in out)) {
-                push @cases, gen_case($cat, regex('.'), $offset, $page_size, $col, $dir);
+                push @cases, gen_case($cat, $days, $offset, $limit, $col, $dir);
             }
         }
     }
@@ -51,7 +73,7 @@ sub gen_cases {
 
     for my $col (qw( pv uv in out )) {
         push @cases,
-            gen_case($cat, regex('.'), undef, undef, undef, undef, 1, $col);
+            gen_case($cat, $days, undef, undef, undef, undef, 1, $col);
     }
 }
 
@@ -84,14 +106,14 @@ sub gen_case {
 
     @$data = sort { $sign * ($a->{$sort} <=> $b->{$sort}) } @$data;
 
-    my @rows = @{$data}[$offset..($offset + $limit)];
+    my @rows = @{$data}[$offset..($offset + $limit - 1)];
 
     return {
         data => json(\@rows),
         when => {
             days => $days,
             offset => $offset,
-            limit => $limit,
+            limit => $page_size,
             cat => $cat,
             dir => $dir,
             sort => $sort,

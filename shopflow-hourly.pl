@@ -21,35 +21,39 @@ view shopflow =>
 my @cases;
 
 for my $digit (0..9) {
-    push @cases, gen_case($digit);
+    push @cases, gen_view_case($digit);
 }
 
 write_php 'view-shopflow-hourly.php', @cases;
 
-write_php 'batch-shopflow-hourly.php',
-    {
-        data => json([
-            run_view(shopflow => 24),
-            run_view(shopflow => 24),
-        ]),
-        when => {
-            days => regex('[02468]$'),
-        }
-    },
-    {
-        data => json([
-            run_view(shopflow => 24),
-            run_view(shopflow => 24),
-        ]),
-    };
+@cases = ();
 
-sub gen_case {
+for my $digit (0..9) {
+    push @cases, gen_batch_case($digit);
+}
+
+write_php 'batch-shopflow-hourly.php', @cases;
+
+sub gen_view_case {
     my $d = shift;
     my $data = run_view shopflow => 24;
     return {
         data => json($data),
         when => {
             day => regex("$d\$"),
+        }
+    };
+}
+
+sub gen_batch_case {
+    my $d = shift;
+    return {
+        data => json([
+            run_view(shopflow => 24),
+            run_view(shopflow => 24),
+        ]),
+        when => {
+            days => regex("$d\$"),
         }
     };
 }

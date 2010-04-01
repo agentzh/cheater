@@ -1,3 +1,5 @@
+.PHONY: all upload
+
 all: view-shopflow-hourly.php batch-shopflow-hourly.php view-catflow.php
 
 view-%.php: %.pl
@@ -5,4 +7,7 @@ view-%.php: %.pl
 
 batch-%.php: %.pl
 	perl $<
+
+upload: all
+	uptree .rsync
 
