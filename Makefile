@@ -1,6 +1,10 @@
 .PHONY: all upload
 
-all: view-shopflow-hourly.php batch-shopflow-hourly.php view-catflow.php
+all: view-shopflow-hourly.php \
+    batch-shopflow-hourly.php \
+    view-catflow.php \
+    view-itemflow-percent.php \
+    view-shopflow-daily.php
 
 view-%.php: %.pl
 	perl $<

@@ -17,7 +17,7 @@ our @EXPORT = qw(
     run_view write_php
     json
     regex
-    empty any
+    is_empty empty any
 );
 
 our %Views;
@@ -251,6 +251,11 @@ sub as_php_str ($) {
     $s =~ s/\r/\\r/g;
     $s =~ s/'/\\'/g;
     "'$s'";
+}
+
+sub is_empty {
+    my $p = shift;
+    ref $p && ref $p eq 'ARRAY' && $p->[0] eq 'empty';
 }
 
 1;
