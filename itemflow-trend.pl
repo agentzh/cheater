@@ -29,7 +29,7 @@ for my $d (0..9) {
     push @cases, {
         data => json($data),
         when => {
-            itemurl => regex("$d\$"),
+            item_index => regex("$d\$"),
         }
     };
 }

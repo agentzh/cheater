@@ -25,7 +25,7 @@ for my $i (1..10) {
     push @cases, {
         data => json($data),
         when => {
-            index => $i,
+            item_index => $i,
         },
     }
 }
