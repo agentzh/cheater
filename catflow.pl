@@ -28,8 +28,8 @@ my ($data, @cases);
 
 my $first_time = 1;
 
-for my $d ('[13579]', '[02468]') {
-    my $pages = $first_time ? 0.3 : 8;
+for my $d ('[02468]', '[13579]') {
+    my $pages = ! $first_time ? 0.3 : 8;
 
     if ($first_time) {
         $first_time = 0;
