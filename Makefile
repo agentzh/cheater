@@ -7,7 +7,8 @@ all: view-shopflow-hourly.php \
     view-shopflow-daily.php \
     view-itemflow-top.php \
     view-itemflow-pic.php \
-    view-itemflow-trend.php
+    view-itemflow-trend.php \
+    view-admin-layout.php
 
 view-%.php: %.pl
 	perl $<

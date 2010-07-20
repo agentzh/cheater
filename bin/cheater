@@ -1,0 +1,97 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Parse::RecDescent;
+use JSON::XS;
+use Getopt::Std;
+
+my %opts;
+getopts('o:', \%opts) or
+    die "Usage: $0 [-o <outfile>] <infile>\n";
+
+$::RD_HINT = 1;
+
+my $infile = shift or
+    die "No input file specified.\n";
+
+my $grammar = <<'END_GRAMMAR';
+
+spec: statement(s /;?/) /;?/ eof
+
+eof: /^\Z/
+
+statement: table_definition
+         | relation_definition
+         | rows_definition
+         | type_definition
+         | include_statement
+
+include_statement: 'include' <commit> file_name
+
+file_name: "'" /(?:[^']|\\.)+/ "'"
+
+table_definition: 'table' <commit> table_name '{'
+            column_definition(s)
+        '}'
+
+table_name: identifier
+
+column_definition: column_name type attribute(s?)
+
+column_name: identifier
+
+type: identifier
+
+attribute: 'unique' | 'serial' | 'not' <commit> 'null';
+
+relation_definition: qualified_column  'refs' <commit> qualified_column
+
+qualified_column: table_name '.' <commit> column_name
+
+rows_definition: /\d+/ <commit> <table_name>
+
+type_definition: 'type' <commit> type constraint
+
+constraint: regex
+          | range
+
+regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
+
+range: number '..' <commit> number
+
+number: /\d+(\.\d*)?|\.\d+/
+
+END_GRAMMAR
+
+$Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
+
+my $parser = new Parse::RecDescent($grammar);
+
+open my $in, $infile or
+    die "Cannot open $infile for reading: $!\n";
+
+my $src = do { local $/; <$in> };
+
+close $in;
+
+my $ast = $parser->spec($src);
+
+if (!defined $ast) {
+    die "Failed to parse $infile due to grammar errors.\n";
+}
+
+my $json_xs = JSON::XS->new;
+
+my $out;
+
+if ($opts{o}) {
+    open $out, ">$opts{o}" or
+        die "Cannot open $opts{o} for writing: $!\n";
+} else {
+    $out = \*STDOUT;
+}
+
+print $out $json_xs->encode({ spec => $ast });
+
