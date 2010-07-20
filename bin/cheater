@@ -1,17 +1,33 @@
 #!/usr/bin/env perl
 
+use 5.010001;
 use strict;
 use warnings;
+
+use Smart::Comments '####';
+use feature qw( say switch );
 
 use Parse::RecDescent;
 use JSON::XS;
 use Getopt::Std;
 
+our $OutDir = './tables';
+
 my %opts;
 getopts('o:', \%opts) or
     die "Usage: $0 [-o <outfile>] <infile>\n";
 
-$::RD_HINT = 1;
+#$::RD_HINT = 1;
+#$::RD_TRACE = 1;
+
+sub gen_goal ($);
+sub gen_column ($$);
+
+sub pick_elems ($$);
+
+sub gen_int_col ($$);
+sub gen_num_col ($$);
+sub gen_txt_col ($$);
 
 my $infile = shift or
     die "No input file specified.\n";
@@ -19,48 +35,69 @@ my $infile = shift or
 my $grammar = <<'END_GRAMMAR';
 
 spec: statement(s) eof
+        { $item[1] }
 
 eof: /^\Z/
 
-statement: table_definition
-         | relation_definition ';'
-         | rows_definition ';'
-         | type_definition ';'
-         | include_statement ';'
+statement: table_definition { $item[1] }
+         | relation_definition ';' { $item[1] }
+         | rows_definition ';' { $item[1] }
+         | type_definition ';' { $item[1] }
+         | include_statement ';' { $item[1] }
+         | <error>
 
 include_statement: 'include' <commit> file_name
+        { [$item[1], $item[3]] }
+        | <error>
 
 file_name: "'" /(?:[^']|\\.)+/ "'"
+        { $item[1] . $item[2] . $item[3] }
 
 table_name: identifier
 
 table_definition: 'table' <commit> table_name '('
             column_definition(s)
         ')'
+            { ['table', $item[3], $item[5]] }
+        | <error>
 
-column_definition: column_name type attribute(s?) ';'
-    | column_name /references|refs/ <commit> qualified_column
+column_definition:
+        column_name /references|refs/ <commit> qualified_column ';'
+            { [$item[1], 'refs', $item[4]] }
+    |  column_name type attribute(s?) ';'
+            { [$item[1], $item[2], $item[3]] }
+    | <error>
 
 column_name: identifier
 
 type: identifier
 
-attribute: 'unique' | 'serial' | 'not' <commit> 'null'
+attribute: 'unique' | 'serial' |
+    'not' <commit> 'null' { "$item[1] $item[3]" }
 
 relation_definition: qualified_column  'refs' <commit> qualified_column
+    | <error>
 
 qualified_column: table_name '.' <commit> column_name
+        { [$item[1], $item[4]] }
+    | <error>
 
 rows_definition: /\d+/ <commit> table_name
+                    { ['rows', $item[1], $item[3]] }
+               | <error>
 
 type_definition: 'type' <commit> type constraint
+                    { ['type', $item[3], $item[4]] }
+               | <error>
 
 constraint: regex
           | range
 
 regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
+        { ['regex', '/' . $item[3] . '/'] }
 
 range: number '..' <commit> number
+        { ['range', $item[1], $item[4]] }
 
 number: /\d+(\.\d*)?|\.\d+/
 
@@ -82,7 +119,7 @@ close $in;
 my $ast = $parser->spec($src);
 
 if (!defined $ast) {
-    die "Failed to parse $infile due to grammar errors.\n";
+    die "Failed to parse $infile due to grammatic errors\n";
 }
 
 my $json_xs = JSON::XS->new;
@@ -97,4 +134,177 @@ if ($opts{o}) {
 }
 
 print $out $json_xs->encode({ spec => $ast });
+
+my (%tables, %cols, %samples, %deps, %goals, %types);
+
+my %cols_visited;
+
+%types = (
+    integer => ['core'],
+    text => ['core'],
+);
+
+for my $stmt (@$ast) {
+    #say $stmt->[0];
+    my $typ = $stmt->[0];
+
+    given ($typ) {
+        when ('type') {
+            my $typname = $stmt->[1];
+            my $def = $stmt->[2];
+            $types{$typname} = $def;
+        }
+        when ('rows') {
+            my $table = $stmt->[2];
+            my $rows = $goals{$table};
+            if ($rows) {
+                die "table $table was configured to generate $rows rows.\n";
+            }
+            $rows = $stmt->[1];
+            $goals{$table} = $rows;
+        }
+        when ('table') {
+            my $table_name  = $stmt->[1];
+            my $table = $stmt->[2];
+            $tables{$table_name} = $table;
+            for my $col (@$table) {
+                #say "col: ", $col->[0];
+                my $name = $col->[0];
+                my $type = $col->[1];
+
+                if ($type eq 'refs') {
+                    my $target = $col->[2];
+                    $deps{"$table_name.$name"} =
+                        $target->[0] . '.' . $target->[1];
+                } elsif (! $types{$type}) {
+                    die "column type $type not defined.\n";
+                }
+
+                $cols{"$table_name.$name"} = {
+                    type => $type,
+                    attrs => $col->[2],
+                };
+            }
+        }
+        default {
+            warn "unknown statement type: $typ\n";
+        }
+    }
+}
+
+### %cols
+### %deps
+### %goals
+### %types
+
+for my $goal (sort keys %goals) {
+    my $table = gen_goal($goal);
+    ### $table
+}
+
+if (! -d $OutDir) {
+    mkdir $OutDir or
+        die "Failed to create directory \"$OutDir\": $!\n";
+}
+
+chdir $OutDir;
+
+sub gen_goal ($) {
+    my $table = shift;
+    my $rows = $goals{$table};
+
+    my @cols_data;
+    my $tb_spec = $tables{$table} or
+        die "Cannot found table $table.\n";
+    for my $col (@$tb_spec) {
+        #say "col: ", $col->[0];
+        my $name = $col->[0];
+        push @cols_data, gen_column($table, $name);
+    }
+
+    return @cols_data;
+}
+
+sub gen_column ($$) {
+    my ($table, $col_name) = @_;
+
+    #### $col_name
+    my $qcol = "$table.$col_name";
+
+    if (defined $samples{$qcol}) {
+        return $samples{$qcol};
+    }
+
+    if (my $dep = $cols_visited{$qcol}) {
+        die "ERROR: Found circular column references: $qcol references $dep but $dep somehow depends on $qcol.\n";
+    }
+
+    my $rows = $goals{$table};
+
+    if (my $dep = $deps{$qcol}) {
+        $cols_visited{$qcol} = $dep;
+        my ($dep_table, $dep_col_name) = split /\./, $dep, 2;
+        if (! $cols{$dep}) {
+            die "ERROR: Column $qcol references non-existent column $dep.\n";
+        }
+        my $refs_data = gen_column($dep_table, $dep_col_name);
+        return pick_elems($refs_data, $rows);
+    }
+
+    my $spec = $cols{$qcol} or
+        die "Column spec not found for $qcol\n";
+    #### $spec
+    my $type = $spec->{type} or
+        die "Type not found for $qcol";
+
+    my $attrs = $spec->{attrs};
+
+    given ($type) {
+        when ('text') {
+            my $data = gen_txt_col($attrs, $rows);
+            $samples{$qcol} = $data;
+            return $data;
+        }
+        when ('integer') {
+            my $data = gen_int_col($attrs, $rows);
+            $samples{$qcol} = $data;
+            return $data;
+        }
+        when ('number') {
+            my $data = gen_num_col($attrs, $rows);
+            $samples{$qcol} = $data;
+            return $data;
+        }
+        default {
+            my $type_def = $types{$type};
+            if (! $type_def) {
+                die "Type $type not defined for table $table column $col_name.\n";
+            }
+        }
+    }
+}
+
+sub pick_elems ($$) {
+    my ($set, $m) = @_;
+    my $n = @$set;
+    my @res;
+    for (1..$m) {
+        my $i = int rand $n;
+        push @res, $set->[$i];
+    }
+    return \@res;
+}
+
+sub gen_int_col ($$) {
+    my ($attrs, $n) = @_;
+
+}
+
+sub gen_num_col ($$) {
+    my ($attrs, $n) = @_;
+}
+
+sub gen_txt_col ($$) {
+    my ($attrs, $n) = @_;
+}
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env cheater
 
+type strid /[a-zA-Z]{32}/;
+
 table users (
     id integer serial;
     user_id strid unique;
@@ -8,6 +10,12 @@ table users (
 
 table posts (
     title text;
-    author refs users.strid;
+    author refs users.id;
 )
+
+#users.nick ~ null (0.3)
+#users.nick ~ null (0.3)
+
+10 users;
+5 posts;
 
