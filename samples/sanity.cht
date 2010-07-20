@@ -1,0 +1,13 @@
+#!/usr/bin/env cheater
+
+table users (
+    id integer serial;
+    user_id strid unique;
+    nick text not null;
+)
+
+table posts (
+    title text;
+    author refs users.strid;
+)
+

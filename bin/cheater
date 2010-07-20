@@ -18,39 +18,40 @@ my $infile = shift or
 
 my $grammar = <<'END_GRAMMAR';
 
-spec: statement(s /;?/) /;?/ eof
+spec: statement(s) eof
 
 eof: /^\Z/
 
 statement: table_definition
-         | relation_definition
-         | rows_definition
-         | type_definition
-         | include_statement
+         | relation_definition ';'
+         | rows_definition ';'
+         | type_definition ';'
+         | include_statement ';'
 
 include_statement: 'include' <commit> file_name
 
 file_name: "'" /(?:[^']|\\.)+/ "'"
 
-table_definition: 'table' <commit> table_name '{'
-            column_definition(s)
-        '}'
-
 table_name: identifier
 
-column_definition: column_name type attribute(s?)
+table_definition: 'table' <commit> table_name '('
+            column_definition(s)
+        ')'
+
+column_definition: column_name type attribute(s?) ';'
+    | column_name /references|refs/ <commit> qualified_column
 
 column_name: identifier
 
 type: identifier
 
-attribute: 'unique' | 'serial' | 'not' <commit> 'null';
+attribute: 'unique' | 'serial' | 'not' <commit> 'null'
 
 relation_definition: qualified_column  'refs' <commit> qualified_column
 
 qualified_column: table_name '.' <commit> column_name
 
-rows_definition: /\d+/ <commit> <table_name>
+rows_definition: /\d+/ <commit> table_name
 
 type_definition: 'type' <commit> type constraint
 
@@ -62,6 +63,8 @@ regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
 range: number '..' <commit> number
 
 number: /\d+(\.\d*)?|\.\d+/
+
+identifier: /[A-Za-z]\w*/
 
 END_GRAMMAR
 
