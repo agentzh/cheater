@@ -38,10 +38,12 @@ type: identifier
 
 attribute: 'unique' | 'unsigned'
     | 'not' <commit> 'null' { "$item[1] $item[3]" }
-    | enum
-    | atom
+    | domain
 
-enum: '{' <commit> atom(s /,/) '}'
+domain: enum
+      | atom { [$item[1]] }
+
+enum: '{' <commit> atom(s? /,/) '}'
         { $item[3] }
     | <error>
 
@@ -53,9 +55,9 @@ atom: number
     | <error>
 
 string: "'" <commit> /(?:[^']|\\.)*/ "'"
-        { "'$item[3]'" }
+        { eval "'$item[3]'" }
       | '"' <commit> /(?:[^"]|\\.)*/ '"'
-        { qq{"$item[3]"} }
+        { eval qq{"$item[3]"} }
       | <error>
 
 relation_definition: qualified_column  'refs' <commit> qualified_column
@@ -74,7 +76,7 @@ type_definition: 'type' <commit> type type attribute(s?)
                | <error>
 
 regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
-        { ['regex', '/' . $item[3] . '/'] }
+        { eval 'qr/' . $item[3] . '/'; if ($@) { die "Bad regex: $@" } }
 
 range: number '..' <commit> number
         { ['range', $item[1], $item[4]] }
@@ -87,5 +89,4 @@ real: /\d+(\.\d*)?|\.\d+/
 int: /\d+/
 
 identifier: /[A-Za-z]\w*/
-
 

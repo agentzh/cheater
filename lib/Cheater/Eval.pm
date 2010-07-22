@@ -5,10 +5,15 @@ use Moose;
 
 #use Smart::Comments;
 use Data::Random qw( rand_chars );
+use Parse::RandGen::Regexp ();
 
 has 'ast' => (is => 'ro', isa => 'Cheater::AST');
 has '_samples' => (is => 'ro', isa => 'HashRef');
 has '_cols_visited' => (is => 'ro', isa => 'HashRef');
+
+sub gen_txt_col ($$$$);
+sub gen_int_col ($$$$);
+sub gen_domain_val ($);
 
 sub BUILD {
     my $self = shift;
@@ -24,11 +29,15 @@ sub go {
 
     my %computed;
     for my $goal (sort keys %$goals) {
-        ### $goal
         $computed{$goal} = $self->gen_goal($goal);
     }
 
     return \%computed;
+}
+
+sub rand_regex ($) {
+    my $regex = shift;
+    Parse::RandGen::Regexp->new(qr/$regex/)->pick();
 }
 
 sub gen_goal {
@@ -65,7 +74,6 @@ sub gen_column {
     my $cols = $ast->cols;
     my $types = $ast->types;
 
-    #### $col_name
     my $qcol = "$table.$col_name";
 
     if (defined $samples->{$qcol}) {
@@ -90,7 +98,7 @@ sub gen_column {
 
     my $spec = $cols->{$qcol} or
         die "Column spec not found for $qcol\n";
-    #### $spec
+
     my $type = $spec->{type} or
         die "Type not found for $qcol";
 
@@ -98,23 +106,23 @@ sub gen_column {
 
     given ($type) {
         when ('text') {
-            my $data = gen_txt_col($attrs, $rows);
+            my $data = gen_txt_col($table, $col_name, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('integer') {
-            my $data = gen_int_col($attrs, $rows);
+            my $data = gen_int_col($table, $col_name, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('serial') {
             push @$attrs, 'serial';
-            my $data = gen_int_col($attrs, $rows);
+            my $data = gen_int_col($table, $col_name, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('number') {
-            my $data = gen_num_col($attrs, $rows);
+            my $data = gen_num_col($table, $col_name, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -124,7 +132,7 @@ sub gen_column {
                 die "Type $type not defined for table $table column $col_name.\n";
             }
 
-            my $data = gen_custom_type_col($attrs, $type_def, $rows);
+            my $data = gen_custom_type_col($table, $col_name, $attrs, $type_def, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -148,8 +156,8 @@ sub gen_int ($) {
         (int rand 1_000_000) - 500_000;
 }
 
-sub gen_int_col ($$) {
-    my ($attrs, $n) = @_;
+sub gen_int_col ($$$$) {
+    my ($table, $col_name, $attrs, $n) = @_;
 
     my ($unique, $sort, $not_null, $unsigned);
 
@@ -219,23 +227,40 @@ sub gen_int_col ($$) {
     return \@nums;
 }
 
-sub gen_num_col ($$) {
-    my ($attrs, $n) = @_;
+sub gen_num_col ($$$$) {
+    my ($table, $col_name, $attrs, $n) = @_;
 }
 
-sub gen_txt_col ($$) {
-    my ($attrs, $n) = @_;
+sub gen_txt_col ($$$$) {
+    my ($table, $col_name, $attrs, $n) = @_;
 
-    my ($unique, $sort, $not_null);
+    my ($unique, $sort, $not_null, $empty_domain, $domain);
 
-    for (@$attrs) {
-        if ($_ eq 'not null') {
+    for my $attr (@$attrs) {
+        if (ref $attr and ref $attr eq 'ARRAY') {
+            # being the domain set
+            $domain = $attr;
+
+            ### $attr
+            if (@$attr == 0) {
+                # empty domain
+                $empty_domain = 1;
+                next;
+            }
+
+        }
+
+        if ($attr eq 'not null') {
             $not_null = 1;
         }
 
-        if ($_ eq 'unique') {
+        if ($attr eq 'unique') {
             $unique = 1;
         }
+    }
+
+    if ($empty_domain && $not_null) {
+        die "table $table, column $col_name: empty domain {} hates \"not null\".\n";
     }
 
     my @txts;
@@ -244,15 +269,21 @@ sub gen_txt_col ($$) {
         if ($unique) {
             while (1) {
                 my $gen_null;
-                if (!$not_null) {
+                if (! $not_null) {
                     $gen_null = (int rand 10) == 0;
                     if ($gen_null) {
                         push @txts, undef;
                     }
                 }
-                if (!$gen_null) {
-                    my $txt = join '',
-                        rand_chars( set => 'all', min => 5, max => 16 );
+                if (! $gen_null) {
+                    my $txt;
+                    if (defined $domain) {
+                        $txt = gen_domain_val($domain);
+                    } else {
+                        $txt = join '',
+                            rand_chars( set => 'all', min => 5, max => 16 );
+                    }
+
                     if (! $hist{$txt}) {
                         push @txts, $txt;
                         $hist{$txt} = 1;
@@ -272,8 +303,13 @@ sub gen_txt_col ($$) {
         }
 
         if (! $gen_null) {
-            my $txt = join '',
-                rand_chars( set => 'all', min => 5, max => 16 );
+            my $txt;
+            if (defined $domain) {
+                $txt = gen_domain_val($domain);
+            } else {
+                $txt = join '',
+                    rand_chars( set => 'all', min => 5, max => 16 );
+            }
             push @txts, $txt;
         }
     }
@@ -287,9 +323,6 @@ sub gen_custom_type_col ($$$) {
 sub to_string {
     my ($self, $computed) = @_;
 
-    ### hi...
-    ### $computed
-
     my $s = '';
 
     for my $table (sort keys %$computed) {
@@ -297,7 +330,6 @@ sub to_string {
         $s .= $self->stringify_table($table, $computed->{$table});
     }
 
-    ### $s
     return $s;
 }
 
@@ -331,13 +363,45 @@ sub stringify_table {
     for my $i (0 .. $nrows - 1) {
         my @row;
         for my $col (@$cols) {
-            $s .= "\t$col->[$i]";
+            my $val = $col->[$i] // 'NULL';
+            $s .= "\t$val";
         }
         $s .= "\n";
         push @rows, \@row;
     }
 
     return $s;
+}
+
+sub gen_domain_val ($) {
+    my $domain = shift;
+
+    if (@$domain == 0) {
+        return undef;
+    }
+
+    my $i = int rand @$domain;
+    my $atom = $domain->[$i];
+    if (my $ref = ref $atom) {
+        if ($ref eq 'Parse::RandGen::Regexp') {
+            return $atom->pick;
+        } elsif ($ref eq 'RegExp') {
+            # TODO
+            $atom = Parse::RandGen::Regexp->new($atom);
+            return $atom->pick;
+        } elsif ($ref eq 'ARRAY') {
+            if ($atom->[0] eq 'range') {
+                # TODO
+                return undef;
+            } else {
+                die "Unknown domain atom type: $atom->[0]";
+            }
+        } else {
+            die "Unkown domain atom ref: $ref";
+        }
+    }
+
+    return $atom;
 }
 
 1;

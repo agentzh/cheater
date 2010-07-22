@@ -5,14 +5,17 @@ use Test::Base -Base;
 #use Smart::Comments;
 use Cheater;
 
+#$::RD_HINT = 1;
+#$::RD_TRACE = 1;
+
 our @EXPORT = qw(
     run_test run_tests
 );
 
-srand(0);
+our $RandSeed = 0;
 
 sub rand_seed ($) {
-    srand(shift);
+    $RandSeed = shift;
 }
 
 sub bail_out (@) {
@@ -22,6 +25,8 @@ sub bail_out (@) {
 sub run_test ($) {
     my $block = shift;
     my $name = $block->name;
+
+    srand($RandSeed);
 
     my $parser = Cheater::Parser->new;
 
@@ -38,6 +43,7 @@ sub run_test ($) {
         bail_out("$name - Cannot construct the AST");
 
     my $eval = Cheater::Eval->new(ast => $ast);
+
     my $computed = $eval->go or
         bail_out("$name - Failed to evaluate a random data base instance");
 
