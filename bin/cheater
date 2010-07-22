@@ -5,8 +5,7 @@ use strict;
 use warnings;
 
 use Smart::Comments '####';
-use feature qw( say switch );
-
+use Data::Random qw( rand_chars );
 use Parse::RecDescent;
 use JSON::XS;
 use Getopt::Std;
@@ -28,6 +27,7 @@ sub pick_elems ($$);
 sub gen_int_col ($$);
 sub gen_num_col ($$);
 sub gen_txt_col ($$);
+sub gen_custom_type_col ($$$);
 
 my $infile = shift or
     die "No input file specified.\n";
@@ -72,8 +72,8 @@ column_name: identifier
 
 type: identifier
 
-attribute: 'unique' | 'serial' |
-    'not' <commit> 'null' { "$item[1] $item[3]" }
+attribute: 'unique' | 'unsigned'
+    | 'not' <commit> 'null' { "$item[1] $item[3]" }
 
 relation_definition: qualified_column  'refs' <commit> qualified_column
     | <error>
@@ -142,6 +142,7 @@ my %cols_visited;
 %types = (
     integer => ['core'],
     text => ['core'],
+    serial => ['core'],
 );
 
 for my $stmt (@$ast) {
@@ -180,9 +181,10 @@ for my $stmt (@$ast) {
                     die "column type $type not defined.\n";
                 }
 
+                my $attrs = $col->[2];
                 $cols{"$table_name.$name"} = {
                     type => $type,
-                    attrs => $col->[2],
+                    attrs => $attrs,
                 };
             }
         }
@@ -199,7 +201,7 @@ for my $stmt (@$ast) {
 
 for my $goal (sort keys %goals) {
     my $table = gen_goal($goal);
-    ### $table
+    #### $table
 }
 
 if (! -d $OutDir) {
@@ -222,7 +224,7 @@ sub gen_goal ($) {
         push @cols_data, gen_column($table, $name);
     }
 
-    return @cols_data;
+    return \@cols_data;
 }
 
 sub gen_column ($$) {
@@ -270,6 +272,12 @@ sub gen_column ($$) {
             $samples{$qcol} = $data;
             return $data;
         }
+        when ('serial') {
+            push @$attrs, 'serial';
+            my $data = gen_int_col($attrs, $rows);
+            $samples{$qcol} = $data;
+            return $data;
+        }
         when ('number') {
             my $data = gen_num_col($attrs, $rows);
             $samples{$qcol} = $data;
@@ -280,6 +288,10 @@ sub gen_column ($$) {
             if (! $type_def) {
                 die "Type $type not defined for table $table column $col_name.\n";
             }
+
+            my $data = gen_custom_type_col($attrs, $type_def, $rows);
+            $samples{$qcol} = $data;
+            return $data;
         }
     }
 }
@@ -295,9 +307,81 @@ sub pick_elems ($$) {
     return \@res;
 }
 
+sub gen_int ($) {
+    my $unsigned = shift;
+    return $unsigned ? (int rand 1_000_000) :
+        (int rand 1_000_000) - 500_000;
+}
+
 sub gen_int_col ($$) {
     my ($attrs, $n) = @_;
 
+    my ($unique, $sort, $not_null, $unsigned);
+
+    for (@$attrs) {
+        if ($_ eq 'serial') {
+            $unique = 1;
+            $sort = 1;
+            $not_null = 1;
+            $unsigned = 1;
+        }
+
+        if ($_ eq 'not null') {
+            $not_null = 1;
+        }
+
+        if ($_ eq 'unique') {
+            $unique = 1;
+        }
+
+        if ($_ eq 'unsigned') {
+            $unsigned = 1;
+        }
+    }
+
+    my @nums;
+    my %hist;
+    for (1..$n) {
+        if ($unique) {
+            while (1) {
+                my $gen_null;
+                if (!$not_null) {
+                    $gen_null = (int rand 10) == 0;
+                    if ($gen_null) {
+                        push @nums, undef;
+                    }
+                }
+                if (!$gen_null) {
+                    my $num = gen_int($unsigned);
+                    if (! $hist{$num}) {
+                        push @nums, $num;
+                        $hist{$num} = 1;
+                        last;
+                    }
+                }
+            }
+            next;
+        }
+
+        my $gen_null;
+        if (!$not_null) {
+            $gen_null = (int rand 10) == 0;
+            if ($gen_null) {
+                push @nums, undef;
+            }
+        }
+
+        if (! $gen_null) {
+            my $num = gen_int($unsigned);
+            push @nums, $num;
+        }
+    }
+
+    if ($sort) {
+        @nums = sort @nums;
+    }
+
+    return \@nums;
 }
 
 sub gen_num_col ($$) {
@@ -306,5 +390,62 @@ sub gen_num_col ($$) {
 
 sub gen_txt_col ($$) {
     my ($attrs, $n) = @_;
+
+    my ($unique, $sort, $not_null);
+
+    for (@$attrs) {
+        if ($_ eq 'not null') {
+            $not_null = 1;
+        }
+
+        if ($_ eq 'unique') {
+            $unique = 1;
+        }
+    }
+
+    my @txts;
+    my %hist;
+    for (1..$n) {
+        if ($unique) {
+            while (1) {
+                my $gen_null;
+                if (!$not_null) {
+                    $gen_null = (int rand 10) == 0;
+                    if ($gen_null) {
+                        push @txts, undef;
+                    }
+                }
+                if (!$gen_null) {
+                    my $txt = join '',
+                        rand_chars( set => 'all', min => 5, max => 16 );
+                    if (! $hist{$txt}) {
+                        push @txts, $txt;
+                        $hist{$txt} = 1;
+                        last;
+                    }
+                }
+            }
+            next;
+        }
+
+        my $gen_null;
+        if (!$not_null) {
+            $gen_null = (int rand 10) == 0;
+            if ($gen_null) {
+                push @txts, undef;
+            }
+        }
+
+        if (! $gen_null) {
+            my $txt = join '',
+                rand_chars( set => 'all', min => 5, max => 16 );
+            push @txts, $txt;
+        }
+    }
+
+    return \@txts;
+}
+
+sub gen_custom_type_col ($$$) {
 }
 

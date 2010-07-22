@@ -3,19 +3,20 @@
 type strid /[a-zA-Z]{32}/;
 
 table users (
-    id integer serial;
-    user_id strid unique;
+    id serial;
+    #user_id strid unique;
     nick text not null;
 )
 
 table posts (
     title text;
+    rank integer;
     author refs users.id;
 )
 
 #users.nick ~ null (0.3)
 #users.nick ~ null (0.3)
 
-10 users;
-5 posts;
+20 users;
+10 posts;
 
