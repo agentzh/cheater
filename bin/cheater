@@ -4,11 +4,15 @@ use 5.010001;
 use strict;
 use warnings;
 
+use lib 'lib';
+use Cheater::AST;
 use Smart::Comments '####';
 use Data::Random qw( rand_chars );
-use Parse::RecDescent;
 use JSON::XS;
 use Getopt::Std;
+use Cheater::Parser;
+
+srand(0);
 
 our $OutDir = './tables';
 
@@ -32,82 +36,7 @@ sub gen_custom_type_col ($$$);
 my $infile = shift or
     die "No input file specified.\n";
 
-my $grammar = <<'END_GRAMMAR';
-
-spec: statement(s) eof
-        { $item[1] }
-
-eof: /^\Z/
-
-statement: table_definition { $item[1] }
-         | relation_definition ';' { $item[1] }
-         | rows_definition ';' { $item[1] }
-         | type_definition ';' { $item[1] }
-         | include_statement ';' { $item[1] }
-         | <error>
-
-include_statement: 'include' <commit> file_name
-        { [$item[1], $item[3]] }
-        | <error>
-
-file_name: "'" /(?:[^']|\\.)+/ "'"
-        { $item[1] . $item[2] . $item[3] }
-
-table_name: identifier
-
-table_definition: 'table' <commit> table_name '('
-            column_definition(s)
-        ')'
-            { ['table', $item[3], $item[5]] }
-        | <error>
-
-column_definition:
-        column_name /references|refs/ <commit> qualified_column ';'
-            { [$item[1], 'refs', $item[4]] }
-    |  column_name type attribute(s?) ';'
-            { [$item[1], $item[2], $item[3]] }
-    | <error>
-
-column_name: identifier
-
-type: identifier
-
-attribute: 'unique' | 'unsigned'
-    | 'not' <commit> 'null' { "$item[1] $item[3]" }
-
-relation_definition: qualified_column  'refs' <commit> qualified_column
-    | <error>
-
-qualified_column: table_name '.' <commit> column_name
-        { [$item[1], $item[4]] }
-    | <error>
-
-rows_definition: /\d+/ <commit> table_name
-                    { ['rows', $item[1], $item[3]] }
-               | <error>
-
-type_definition: 'type' <commit> type constraint
-                    { ['type', $item[3], $item[4]] }
-               | <error>
-
-constraint: regex
-          | range
-
-regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
-        { ['regex', '/' . $item[3] . '/'] }
-
-range: number '..' <commit> number
-        { ['range', $item[1], $item[4]] }
-
-number: /\d+(\.\d*)?|\.\d+/
-
-identifier: /[A-Za-z]\w*/
-
-END_GRAMMAR
-
-$Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
-
-my $parser = new Parse::RecDescent($grammar);
+my $parser = Cheater::Parser->new;
 
 open my $in, $infile or
     die "Cannot open $infile for reading: $!\n";
@@ -116,88 +45,23 @@ my $src = do { local $/; <$in> };
 
 close $in;
 
-my $ast = $parser->spec($src);
+my $parse_tree = $parser->spec($src);
 
-if (!defined $ast) {
+if (!defined $parse_tree) {
     die "Failed to parse $infile due to grammatic errors\n";
 }
 
-my $json_xs = JSON::XS->new;
+my $ast = Cheater::AST->new($parse_tree)
+    or die "Cannot construct the AST";
 
-my $out;
-
-if ($opts{o}) {
-    open $out, ">$opts{o}" or
-        die "Cannot open $opts{o} for writing: $!\n";
-} else {
-    $out = \*STDOUT;
-}
-
-print $out $json_xs->encode({ spec => $ast });
-
-my (%tables, %cols, %samples, %deps, %goals, %types);
+my %goals = %{ $ast->{goals} };
+my %cols = %{ $ast->{cols} };
+my %samples = %{ $ast->{samples} };
+my %deps = %{ $ast->{deps} };
+my %types = %{ $ast->{types} };
+my %tables = %{ $ast->{tables} };
 
 my %cols_visited;
-
-%types = (
-    integer => ['core'],
-    text => ['core'],
-    serial => ['core'],
-);
-
-for my $stmt (@$ast) {
-    #say $stmt->[0];
-    my $typ = $stmt->[0];
-
-    given ($typ) {
-        when ('type') {
-            my $typname = $stmt->[1];
-            my $def = $stmt->[2];
-            $types{$typname} = $def;
-        }
-        when ('rows') {
-            my $table = $stmt->[2];
-            my $rows = $goals{$table};
-            if ($rows) {
-                die "table $table was configured to generate $rows rows.\n";
-            }
-            $rows = $stmt->[1];
-            $goals{$table} = $rows;
-        }
-        when ('table') {
-            my $table_name  = $stmt->[1];
-            my $table = $stmt->[2];
-            $tables{$table_name} = $table;
-            for my $col (@$table) {
-                #say "col: ", $col->[0];
-                my $name = $col->[0];
-                my $type = $col->[1];
-
-                if ($type eq 'refs') {
-                    my $target = $col->[2];
-                    $deps{"$table_name.$name"} =
-                        $target->[0] . '.' . $target->[1];
-                } elsif (! $types{$type}) {
-                    die "column type $type not defined.\n";
-                }
-
-                my $attrs = $col->[2];
-                $cols{"$table_name.$name"} = {
-                    type => $type,
-                    attrs => $attrs,
-                };
-            }
-        }
-        default {
-            warn "unknown statement type: $typ\n";
-        }
-    }
-}
-
-### %cols
-### %deps
-### %goals
-### %types
 
 for my $goal (sort keys %goals) {
     my $table = gen_goal($goal);

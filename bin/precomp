@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use File::Copy qw( move );
+use Parse::RecDescent;
+
+$Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
+
+my $infile = shift or usage();
+my $outfile = shift or usage();
+
+open my $in, $infile or
+    die "Cannot open $infile for reading: $!\n";
+
+my $grammar = do { local $/; <$in> };
+
+close $in;
+
+Parse::RecDescent->Precompile($grammar, "Cheater::Parser") or
+    die "Failed to precompile the grammar";
+
+move('Parser.pm', $outfile) or
+    die "Failed to move ./Parser.pm to $outfile";
+
+sub usage {
+    print "Usage: $0 <grammar-file>\n";
+    exit 1;
+}
+

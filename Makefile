@@ -1,6 +1,14 @@
-.PHONY: all upload
+.PHONY: old upload
 
-all: view-shopflow-hourly.php \
+all: lib/Cheater/Parser.pm
+
+lib/Cheater/Parser.pm: grammar/cheater.grammar bin/precomp
+	bin/precomp $< $@
+
+test: all
+	bin/cheater samples/sanity.cht
+
+old: view-shopflow-hourly.php \
     batch-shopflow-hourly.php \
     view-catflow.php \
     view-itemflow-percent.php \

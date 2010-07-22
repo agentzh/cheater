@@ -1,0 +1,91 @@
+spec: statement(s) eof
+        { $item[1] }
+
+eof: /^\Z/
+
+statement: table_definition { $item[1] }
+         | relation_definition ';' { $item[1] }
+         | rows_definition ';' { $item[1] }
+         | type_definition ';' { $item[1] }
+         | include_statement ';' { $item[1] }
+         | <error>
+
+include_statement: 'include' <commit> file_name
+        { [$item[1], $item[3]] }
+        | <error>
+
+file_name: "'" /(?:[^']|\\.)+/ "'"
+        { $item[1] . $item[2] . $item[3] }
+
+table_name: identifier
+
+table_definition: 'table' <commit> table_name '('
+            column_definition(s)
+        ')'
+            { ['table', $item[3], $item[5]] }
+        | <error>
+
+column_definition:
+        column_name /references|refs/ <commit> qualified_column ';'
+            { [$item[1], 'refs', $item[4]] }
+    |  column_name type attribute(s?) ';'
+            { [$item[1], $item[2], $item[3]] }
+    | <error>
+
+column_name: identifier
+
+type: identifier
+
+attribute: 'unique' | 'unsigned'
+    | 'not' <commit> 'null' { "$item[1] $item[3]" }
+    | enum
+    | atom
+
+enum: '{' <commit> atom(s /,/) '}'
+        { $item[3] }
+    | <error>
+
+atom: number
+    | range
+    | regex
+    | string
+    | int
+    | <error>
+
+string: "'" <commit> /(?:[^']|\\.)*/ "'"
+        { "'$item[3]'" }
+      | '"' <commit> /(?:[^"]|\\.)*/ '"'
+        { qq{"$item[3]"} }
+      | <error>
+
+relation_definition: qualified_column  'refs' <commit> qualified_column
+    | <error>
+
+qualified_column: table_name '.' <commit> column_name
+        { [$item[1], $item[4]] }
+    | <error>
+
+rows_definition: /\d+/ <commit> table_name
+                    { ['rows', $item[1], $item[3]] }
+               | <error>
+
+type_definition: 'type' <commit> type type attribute(s?)
+                    { ['type', $item[3], $item[4], $item[5]] }
+               | <error>
+
+regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
+        { ['regex', '/' . $item[3] . '/'] }
+
+range: number '..' <commit> number
+        { ['range', $item[1], $item[4]] }
+
+number: real
+      | int
+
+real: /\d+(\.\d*)?|\.\d+/
+
+int: /\d+/
+
+identifier: /[A-Za-z]\w*/
+
+
