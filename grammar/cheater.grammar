@@ -76,7 +76,7 @@ type_definition: 'type' <commit> type type attribute(s?)
                | <error>
 
 regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
-        { eval 'qr/' . $item[3] . '/'; if ($@) { die "Bad regex: $@" } }
+        { my $re = eval 'qr/' . $item[3] . '/'; if ($@) { die "Bad regex: $@"; } $re }
 
 range: number '..' <commit> number
         { ['range', $item[1], $item[4]] }

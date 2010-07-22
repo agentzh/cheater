@@ -192,6 +192,7 @@ sub gen_int_col ($$$$) {
                     $gen_null = (int rand 10) == 0;
                     if ($gen_null) {
                         push @nums, undef;
+                        last;
                     }
                 }
                 if (!$gen_null) {
@@ -268,17 +269,20 @@ sub gen_txt_col ($$$$) {
     for (1..$n) {
         if ($unique) {
             while (1) {
+                #warn "unique looping";
                 my $gen_null;
                 if (! $not_null) {
                     $gen_null = (int rand 10) == 0;
                     if ($gen_null) {
                         push @txts, undef;
+                        last;
                     }
                 }
                 if (! $gen_null) {
                     my $txt;
                     if (defined $domain) {
                         $txt = gen_domain_val($domain);
+                        #warn "txt: $txt";
                     } else {
                         $txt = join '',
                             rand_chars( set => 'all', min => 5, max => 16 );
@@ -382,11 +386,12 @@ sub gen_domain_val ($) {
 
     my $i = int rand @$domain;
     my $atom = $domain->[$i];
+    #warn "domain size: ", scalar(@$domain);
+    #warn "ATOM: $i $atom\n";
     if (my $ref = ref $atom) {
         if ($ref eq 'Parse::RandGen::Regexp') {
             return $atom->pick;
-        } elsif ($ref eq 'RegExp') {
-            # TODO
+        } elsif ($ref eq 'Regexp') {
             $atom = Parse::RandGen::Regexp->new($atom);
             return $atom->pick;
         } elsif ($ref eq 'ARRAY') {

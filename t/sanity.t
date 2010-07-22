@@ -149,3 +149,19 @@ users
       d
       bcd
 
+
+=== TEST 8: regex
+--- src
+table users (
+    name text /[a-z]{3}\d{2}/ not null unique;
+)
+
+4 users;
+--- out
+users
+      name
+      wpu38
+      tgk85
+      cok98
+      ylu09
+
