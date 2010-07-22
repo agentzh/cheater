@@ -6,7 +6,7 @@ lib/Cheater/Parser.pm: grammar/cheater.grammar bin/precomp
 	bin/precomp $< $@
 
 test: all
-	bin/cheater samples/sanity.cht
+	prove -Ilib -r t
 
 old: view-shopflow-hourly.php \
     batch-shopflow-hourly.php \

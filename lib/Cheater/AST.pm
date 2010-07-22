@@ -5,7 +5,6 @@ use Moose;
 
 has 'goals' => (is => 'ro', isa => 'HashRef');
 has 'cols' => (is => 'ro', isa => 'HashRef');
-has 'samples' => (is => 'ro', isa => 'HashRef');
 has 'deps' => (is => 'ro', isa => 'HashRef');
 has 'types' => (is => 'ro', isa => 'HashRef');
 has 'tables' => (is => 'ro', isa => 'HashRef');
@@ -16,9 +15,9 @@ around BUILDARGS => sub {
 
     my $parse_tree = shift;
 
-    warn "BUILDARGS";
+    #warn "BUILDARGS";
 
-    my (%tables, %cols, %samples, %deps, %goals, %types);
+    my (%tables, %cols, %deps, %goals, %types);
 
     my %cols_visited;
 
@@ -80,7 +79,6 @@ around BUILDARGS => sub {
     return {
         tables  => \%tables,
         cols    => \%cols,
-        samples => \%samples,
         deps    => \%deps,
         goals   => \%goals,
         types   => \%types,
