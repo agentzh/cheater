@@ -165,3 +165,19 @@ users
       cok98
       ylu09
 
+
+=== TEST 8: empty domain
+--- src
+table users (
+    name text {} unique;
+)
+
+4 users;
+--- out
+users
+      name
+      NULL
+      NULL
+      NULL
+      NULL
+

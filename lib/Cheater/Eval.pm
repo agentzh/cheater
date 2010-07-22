@@ -282,6 +282,10 @@ sub gen_txt_col ($$$$) {
                     my $txt;
                     if (defined $domain) {
                         $txt = gen_domain_val($domain);
+                        if (!defined $txt) {
+                            push @txts, $txt;
+                            last;
+                        }
                         #warn "txt: $txt";
                     } else {
                         $txt = join '',
@@ -316,7 +320,7 @@ sub gen_txt_col ($$$$) {
             }
             push @txts, $txt;
         }
-    }
+    } # for loop
 
     return \@txts;
 }
