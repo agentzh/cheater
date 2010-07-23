@@ -6,7 +6,7 @@ use warnings;
 use t::Cheater;
 
 plan tests => 1 * blocks();
-no_diff;
+#no_diff;
 
 run_tests;
 
@@ -71,7 +71,28 @@ users
 
 
 
-=== TEST 4: enum unique
+=== TEST 4: enum simple nums
+--- src
+table users (
+    name text {-3.1,-1,1.5,3} not null;
+)
+
+8 users;
+--- out
+users
+      name
+      -3.1
+      1.5
+      -3.1
+      3
+      1.5
+      3
+      1.5
+      -1
+
+
+
+=== TEST 5: enum unique
 --- src
 table users (
     name text {'abc','bcd','c','d'} not null unique;
@@ -88,7 +109,7 @@ users
 
 
 
-=== TEST 5: regex
+=== TEST 6: regex
 --- src
 table users (
     name text /[a-z]{3}\d{2}/ not null unique;
@@ -105,7 +126,7 @@ users
 
 
 
-=== TEST 6: empty domain
+=== TEST 7: empty domain
 --- src
 table users (
     name text {} unique;
@@ -122,7 +143,7 @@ users
 
 
 
-=== TEST 7: int range
+=== TEST 8: int range
 --- src
 table users (
     name text 1..3 unique;
@@ -139,7 +160,7 @@ users
 
 
 
-=== TEST 8: real range
+=== TEST 9: real range
 --- src
 table users (
     name text 1.0..3.0 unique;
@@ -153,4 +174,38 @@ users
       2.57160
       2.74781
       1.70746
+
+
+
+=== TEST 10: int range (negative numbers)
+--- src
+table users (
+    name text -3..-1 unique;
+)
+
+4 users;
+--- out
+users
+      name
+      -3
+      -1
+      -2
+      NULL
+
+
+
+=== TEST 11: real range (negative numbers)
+--- src
+table users (
+    name text -2.0..-1.5 unique;
+)
+
+4 users;
+--- out
+users
+      name
+      -1.95181
+      -1.60710
+      -1.56305
+      -1.82314
 

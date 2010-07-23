@@ -405,7 +405,7 @@ sub gen_domain_val ($) {
                 if ($b < $a) {
                     die "Bad range: $a .. $b: $b < $a\n";
                 }
-                if ($a =~ /^\d+$/ && $b =~ /^\d+$/) {
+                if ($a =~ /^-?\d+$/ && $b =~ /^-?\d+$/) {
                     # pure integer
                     return int(rand($b - $a + 1)) + $a;
                 }

@@ -84,9 +84,9 @@ range: number '..' <commit> number
 number: real
       | int
 
-real: /\d+\.\d+/
+real: /-?\d+\.\d+\b/
 
-int: /\d+/
+int: /-?\d+\b/
 
 identifier: /[A-Za-z]\w*/
 
