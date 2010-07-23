@@ -4,7 +4,10 @@ use 5.010001;
 use Moose;
 
 #use Smart::Comments;
-use Data::Random qw( rand_chars rand_date rand_time );
+use Data::Random qw(
+    rand_chars
+    rand_date rand_time rand_datetime
+);
 use Parse::RandGen::Regexp ();
 use Scalar::Util qw( looks_like_number );
 
@@ -144,6 +147,12 @@ sub gen_column {
         when ('time') {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
                 \&rand_time);
+            $samples->{$qcol} = $data;
+            return $data;
+        }
+        when ('datetime') {
+            my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
+                \&rand_datetime);
             $samples->{$qcol} = $data;
             return $data;
         }

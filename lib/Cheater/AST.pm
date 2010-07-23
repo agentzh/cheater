@@ -22,12 +22,13 @@ around BUILDARGS => sub {
     my %cols_visited;
 
     %types = (
-        integer => 1,
-        text    => 1,
-        serial  => 1,
-        real    => 1,
-        date    => 1,
-        time    => 1,
+        integer  => 1,
+        text     => 1,
+        serial   => 1,
+        real     => 1,
+        date     => 1,
+        time     => 1,
+        datetime => 1,
     );
 
     for my $stmt (@$parse_tree) {
