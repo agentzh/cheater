@@ -92,7 +92,28 @@ users
 
 
 
-=== TEST 5: enum unique
+=== TEST 5: enum (mixture)
+--- src
+table users (
+    name text {18, -9.1, /[a-c]{3}/, 1..2} not null unique;
+)
+
+8 users;
+--- out
+users
+     name
+     18
+     bcc
+     -9.1
+     2
+     ccb
+     abb
+     aaa
+     1
+
+
+
+=== TEST 6: enum unique
 --- src
 table users (
     name text {'abc','bcd','c','d'} not null unique;
@@ -109,7 +130,7 @@ users
 
 
 
-=== TEST 6: regex
+=== TEST 7: regex
 --- src
 table users (
     name text /[a-z]{3}\d{2}/ not null unique;
@@ -126,7 +147,7 @@ users
 
 
 
-=== TEST 7: empty domain
+=== TEST 8: empty domain
 --- src
 table users (
     name text {} unique;
@@ -143,7 +164,7 @@ users
 
 
 
-=== TEST 8: int range
+=== TEST 9: int range
 --- src
 table users (
     name text 1..3 unique;
@@ -160,7 +181,7 @@ users
 
 
 
-=== TEST 9: real range
+=== TEST 10: real range
 --- src
 table users (
     name text 1.0..3.0 unique;
@@ -177,7 +198,7 @@ users
 
 
 
-=== TEST 10: int range (negative numbers)
+=== TEST 11: int range (negative numbers)
 --- src
 table users (
     name text -3..-1 unique;
@@ -194,7 +215,7 @@ users
 
 
 
-=== TEST 11: real range (negative numbers)
+=== TEST 12: real range (negative numbers)
 --- src
 table users (
     name text -2.0..-1.5 unique;
