@@ -36,7 +36,7 @@ column_name: identifier
 
 type: identifier
 
-attribute: 'unique' | 'unsigned' | 'sorted'
+attribute: 'unique' | 'unsigned' | 'asc' | 'desc'
     | 'not' <commit> 'null' { "$item[1] $item[3]" }
 
 domain: enum

@@ -52,10 +52,10 @@ users
 
 
 
-=== TEST 3: sorted text column
+=== TEST 3: asc sorted text column
 --- src
 table foo (
-    title text {'hello', 'hel', 'abc', 2, 12} sorted;
+    title text {'hello', 'hel', 'abc', 2, 12} asc;
 )
 
 10 foo;
@@ -75,7 +75,30 @@ foo
 
 
 
-=== TEST 4: enum simple texts
+=== TEST 4: desc sorted text column
+--- src
+table foo (
+    title text {'hello', 'hel', 'abc', 2, 12} desc;
+)
+
+10 foo;
+--- out
+foo
+      title
+      hel
+      abc
+      abc
+      NULL
+      2
+      2
+      2
+      2
+      12
+      12
+
+
+
+=== TEST 5: enum simple texts
 --- src
 table users (
     name text {'abc','bcd','c'} not null;
@@ -94,7 +117,7 @@ users
 
 
 
-=== TEST 5: enum simple nums
+=== TEST 6: enum simple nums
 --- src
 table users (
     name text {-3.1,-1,1.5,3} not null;
@@ -115,7 +138,7 @@ users
 
 
 
-=== TEST 6: enum (mixture)
+=== TEST 7: enum (mixture)
 --- src
 table users (
     name text {18, -9.1, /[a-c]{3}/, 1..2} not null unique;
@@ -136,7 +159,7 @@ users
 
 
 
-=== TEST 7: enum unique
+=== TEST 8: enum unique
 --- src
 table users (
     name text {'abc','bcd','c','d'} not null unique;
@@ -153,7 +176,7 @@ users
 
 
 
-=== TEST 8: regex
+=== TEST 9: regex
 --- src
 table users (
     name text /[a-z]{3}\d{2}/ not null unique;
@@ -170,7 +193,7 @@ users
 
 
 
-=== TEST 9: empty domain enum
+=== TEST 10: empty domain enum
 --- src
 table users (
     name text {} unique;
@@ -187,7 +210,7 @@ users
 
 
 
-=== TEST 10: int range
+=== TEST 11: int range
 --- src
 table users (
     name text 1..3 unique;
@@ -204,7 +227,7 @@ users
 
 
 
-=== TEST 11: real range
+=== TEST 12: real range
 --- src
 table users (
     name text 1.0..3.0 unique;
@@ -221,7 +244,7 @@ users
 
 
 
-=== TEST 12: int range (negative numbers)
+=== TEST 13: int range (negative numbers)
 --- src
 table users (
     name text -3..-1 unique;
@@ -238,7 +261,7 @@ users
 
 
 
-=== TEST 13: real range (negative numbers)
+=== TEST 14: real range (negative numbers)
 --- src
 table users (
     name text -2.0..-1.5 unique;

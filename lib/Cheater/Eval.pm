@@ -182,7 +182,7 @@ sub gen_real ($) {
 sub gen_num_col ($$$$$$) {
     my ($table, $col_name, $domain, $attrs, $n, $type) = @_;
 
-    my ($unique, $sort, $not_null, $unsigned, $empty_domain);
+    my ($unique, $asc, $desc, $not_null, $unsigned, $empty_domain);
 
     if ($domain && @$domain == 0) {
         $empty_domain = 1;
@@ -195,7 +195,7 @@ sub gen_num_col ($$$$$$) {
     for (@$attrs) {
         if ($_ eq 'serial') {
             $unique = 1;
-            $sort = 1;
+            $asc = 1;
             $not_null = 1;
             $unsigned = 1;
         }
@@ -212,9 +212,17 @@ sub gen_num_col ($$$$$$) {
             $unsigned = 1;
         }
 
-        if ($_ eq 'sorted') {
-            $sort = 1;
+        if ($_ eq 'asc') {
+            $asc = 1;
         }
+
+        if ($_ eq 'desc') {
+            $desc = 1;
+        }
+    }
+
+    if ($asc && $desc) {
+        die "table $table, column $col_name: asc hates desc.\n";
     }
 
     if ($empty_domain && $not_null) {
@@ -303,11 +311,18 @@ sub gen_num_col ($$$$$$) {
         }
     }
 
-    if ($sort) {
+    if ($asc) {
         @nums = sort {
             my $aa = $a // 0;
             my $bb = $b // 0;
             $aa <=> $bb
+        } @nums;
+
+    } elsif ($desc) {
+        @nums = sort {
+            my $aa = $a // 0;
+            my $bb = $b // 0;
+            $bb <=> $aa
         } @nums;
     }
 
@@ -317,7 +332,7 @@ sub gen_num_col ($$$$$$) {
 sub gen_txt_col ($$$$$$) {
     my ($table, $col_name, $domain, $attrs, $n, $gen) = @_;
 
-    my ($unique, $sort, $not_null, $empty_domain);
+    my ($unique, $asc, $desc, $not_null, $empty_domain);
 
     if ($domain && @$domain == 0) {
         $empty_domain = 1;
@@ -332,9 +347,17 @@ sub gen_txt_col ($$$$$$) {
             $unique = 1;
         }
 
-        if ($_ eq 'sorted') {
-            $sort = 1;
+        if ($_ eq 'asc') {
+            $asc = 1;
         }
+
+        if ($_ eq 'desc') {
+            $desc = 1;
+        }
+    }
+
+    if ($asc && $desc) {
+        die "table $table, column $col_name: asc hates desc.\n";
     }
 
     if ($empty_domain && $not_null) {
@@ -405,11 +428,17 @@ sub gen_txt_col ($$$$$$) {
         }
     } # for loop
 
-    if ($sort) {
+    if ($asc) {
         @txts = sort {
             my $aa = $a // 'NULL';
             my $bb = $b // 'NULL';
             $aa cmp $bb
+        } @txts;
+    } elsif ($desc) {
+        @txts = sort {
+            my $aa = $a // 'NULL';
+            my $bb = $b // 'NULL';
+            $bb cmp $aa
         } @txts;
     }
 
