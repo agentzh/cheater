@@ -34,8 +34,10 @@ sub run_test ($) {
     my $src = $block->src or
         bail_out("$name - No --- src specified");
 
-    (my $expected = $block->out) //
+    my $expected = $block->out;
+    if (!defined $expected && !defined $block->err) {
         bail_out("$name - No --- out specified");
+    }
 
     my $parse_tree = $parser->spec($src) or
         bail_out("$name - Failed to parse --- src due to grammatic errors");
@@ -45,8 +47,23 @@ sub run_test ($) {
 
     my $eval = Cheater::Eval->new(ast => $ast);
 
-    my $computed = $eval->go or
-        bail_out("$name - Failed to evaluate a random data base instance");
+    my $computed;
+
+    eval {
+        $computed  = $eval->go or
+            bail_out("$name - Failed to evaluate a random data base instance");
+    };
+    if (defined $block->err) {
+        if ($@) {
+            is $block->err, $@, "$name - err ok";
+        } else {
+            fail "$name - err ok";
+        }
+        return;
+    }
+    if ($@) {
+        bail_out("$name - Failed to evaluate a random data base instance: $@");
+    }
 
     my $got = $eval->to_string($computed);
     ### $got

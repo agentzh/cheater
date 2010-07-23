@@ -124,17 +124,8 @@ table users (
 )
 
 8 users;
---- out
-users
-     name
-     18
-     0
-     -9
-     2
-     -9
-     -9
-     0
-     0
+--- err
+table users, column name: "bcc" does not look like a number.
 
 
 
@@ -145,13 +136,8 @@ table users (
 )
 
 4 users;
---- out
-users
-      name
-      0
-      0
-      0
-      0
+--- err
+table users, column name: "abc" does not look like a number.
 
 
 

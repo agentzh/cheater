@@ -239,8 +239,10 @@ sub gen_num_col ($$$$$$) {
                         }
 
                         if (! looks_like_number($num)) {
-                            $num = 0;
-                        } elsif ($type eq 'i') {
+                            die "table $table, column $col_name: \"$num\" does not look like a number.\n";
+                        }
+
+                        if ($type eq 'i') {
                             $num = int $num;
                         }
                     } else {
@@ -272,10 +274,11 @@ sub gen_num_col ($$$$$$) {
                 $num = gen_domain_val($domain);
                 if (defined $num) {
                     if (! looks_like_number($num)) {
-                        $num = 0;
-                    } else {
-                        $num = int $num if $type eq 'i';
+
+                        die "table $table, column $col_name: \"$num\" does not look like a number.\n";
                     }
+
+                    $num = int $num if $type eq 'i';
                 }
             } else {
                 $num = $type eq 'i' ? gen_int($unsigned) : gen_real($unsigned);
