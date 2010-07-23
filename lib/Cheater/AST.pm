@@ -63,9 +63,17 @@ around BUILDARGS => sub {
                         die "column type $type not defined.\n";
                     }
 
-                    my $attrs = $col->[2];
+                    my $domain = $col->[2];
+                    if (@$domain == 0) {
+                        $domain = undef;
+                    } else {
+                        $domain = $domain->[0];
+                    }
+
+                    my $attrs = $col->[3];
                     $cols{"$table_name.$name"} = {
                         type => $type,
+                        domain => $domain,
                         attrs => $attrs,
                     };
                 }

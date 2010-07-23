@@ -150,7 +150,8 @@ users
       bcd
 
 
-=== TEST 8: regex
+
+=== TEST 9: regex
 --- src
 table users (
     name text /[a-z]{3}\d{2}/ not null unique;
@@ -166,7 +167,8 @@ users
       ylu09
 
 
-=== TEST 8: empty domain
+
+=== TEST 10: empty domain
 --- src
 table users (
     name text {} unique;
@@ -180,4 +182,38 @@ users
       NULL
       NULL
       NULL
+
+
+
+=== TEST 11: int range
+--- src
+table users (
+    name text 1..3 unique;
+)
+
+4 users;
+--- out
+users
+      name
+      1
+      3
+      2
+      NULL
+
+
+
+=== TEST 12: real range
+--- src
+table users (
+    name text 1.0..3.0 unique;
+)
+
+4 users;
+--- out
+users
+      name
+      1.19274
+      2.57160
+      2.74781
+      1.70746
 

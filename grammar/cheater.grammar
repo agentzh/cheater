@@ -26,10 +26,10 @@ table_definition: 'table' <commit> table_name '('
         | <error>
 
 column_definition:
-        column_name /references|refs/ <commit> qualified_column ';'
+        column_name 'references' <commit> qualified_column ';'
             { [$item[1], 'refs', $item[4]] }
-    |  column_name type attribute(s?) ';'
-            { [$item[1], $item[2], $item[3]] }
+    |  column_name type domain(?) attribute(s?) ';'
+            { [$item[1], $item[2], $item[3], $item[4] ] }
     | <error>
 
 column_name: identifier
@@ -38,17 +38,16 @@ type: identifier
 
 attribute: 'unique' | 'unsigned'
     | 'not' <commit> 'null' { "$item[1] $item[3]" }
-    | domain
 
 domain: enum
-      | atom { [$item[1]] }
+      | atom { [ $item[1] ] }
 
 enum: '{' <commit> atom(s? /,/) '}'
         { $item[3] }
     | <error>
 
-atom: number
-    | range
+atom: range
+    | number
     | regex
     | string
     | int
@@ -71,8 +70,9 @@ rows_definition: /\d+/ <commit> table_name
                     { ['rows', $item[1], $item[3]] }
                | <error>
 
-type_definition: 'type' <commit> type type attribute(s?)
-                    { ['type', $item[3], $item[4], $item[5]] }
+type_definition: 'type' <commit> type type domain(?) attribute(s?)
+                    {
+                        ['type', $item[3], $item[4], $item[5], $item[6]] }
                | <error>
 
 regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
@@ -84,7 +84,7 @@ range: number '..' <commit> number
 number: real
       | int
 
-real: /\d+(\.\d*)?|\.\d+/
+real: /\d+\.\d+/
 
 int: /\d+/
 

@@ -11,8 +11,8 @@ has 'ast' => (is => 'ro', isa => 'Cheater::AST');
 has '_samples' => (is => 'ro', isa => 'HashRef');
 has '_cols_visited' => (is => 'ro', isa => 'HashRef');
 
-sub gen_txt_col ($$$$);
-sub gen_int_col ($$$$);
+sub gen_txt_col ($$$$$);
+sub gen_int_col ($$$$$);
 sub gen_domain_val ($);
 
 sub BUILD {
@@ -103,26 +103,27 @@ sub gen_column {
         die "Type not found for $qcol";
 
     my $attrs = $spec->{attrs};
+    my $domain = $spec->{domain};
 
     given ($type) {
         when ('text') {
-            my $data = gen_txt_col($table, $col_name, $attrs, $rows);
+            my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('integer') {
-            my $data = gen_int_col($table, $col_name, $attrs, $rows);
+            my $data = gen_int_col($table, $col_name, $domain, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('serial') {
             push @$attrs, 'serial';
-            my $data = gen_int_col($table, $col_name, $attrs, $rows);
+            my $data = gen_int_col($table, $col_name, $domain, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('number') {
-            my $data = gen_num_col($table, $col_name, $attrs, $rows);
+            my $data = gen_num_col($table, $col_name, $attrs, $domain, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -132,7 +133,7 @@ sub gen_column {
                 die "Type $type not defined for table $table column $col_name.\n";
             }
 
-            my $data = gen_custom_type_col($table, $col_name, $attrs, $type_def, $rows);
+            my $data = gen_custom_type_col($table, $col_name, $attrs, $type_def, $domain, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -156,10 +157,13 @@ sub gen_int ($) {
         (int rand 1_000_000) - 500_000;
 }
 
-sub gen_int_col ($$$$) {
-    my ($table, $col_name, $attrs, $n) = @_;
+sub gen_int_col ($$$$$) {
+    my ($table, $col_name, $domain, $attrs, $n) = @_;
 
     my ($unique, $sort, $not_null, $unsigned);
+
+    ### $domain
+    ### $attrs
 
     for (@$attrs) {
         if ($_ eq 'serial') {
@@ -232,25 +236,16 @@ sub gen_num_col ($$$$) {
     my ($table, $col_name, $attrs, $n) = @_;
 }
 
-sub gen_txt_col ($$$$) {
-    my ($table, $col_name, $attrs, $n) = @_;
+sub gen_txt_col ($$$$$) {
+    my ($table, $col_name, $domain, $attrs, $n) = @_;
 
-    my ($unique, $sort, $not_null, $empty_domain, $domain);
+    my ($unique, $sort, $not_null, $empty_domain);
+
+    if ($domain && @$domain == 0) {
+        $empty_domain = 1;
+    }
 
     for my $attr (@$attrs) {
-        if (ref $attr and ref $attr eq 'ARRAY') {
-            # being the domain set
-            $domain = $attr;
-
-            ### $attr
-            if (@$attr == 0) {
-                # empty domain
-                $empty_domain = 1;
-                next;
-            }
-
-        }
-
         if ($attr eq 'not null') {
             $not_null = 1;
         }
@@ -347,6 +342,8 @@ sub stringify_table {
     my $ast = $self->ast;
     my $tables = $ast->tables;
 
+    ### $ast
+
     my $tb_spec = $tables->{$table} or
         die "Cannot found table $table.\n";
 
@@ -384,6 +381,8 @@ sub stringify_table {
 sub gen_domain_val ($) {
     my $domain = shift;
 
+    ### $domain
+
     if (@$domain == 0) {
         return undef;
     }
@@ -400,11 +399,21 @@ sub gen_domain_val ($) {
             return $atom->pick;
         } elsif ($ref eq 'ARRAY') {
             if ($atom->[0] eq 'range') {
-                # TODO
-                return undef;
-            } else {
-                die "Unknown domain atom type: $atom->[0]";
+                my $a = $atom->[1];
+                my $b = $atom->[2];
+
+                if ($b < $a) {
+                    die "Bad range: $a .. $b: $b < $a\n";
+                }
+                if ($a =~ /^\d+$/ && $b =~ /^\d+$/) {
+                    # pure integer
+                    return int(rand($b - $a + 1)) + $a;
+                }
+
+                return sprintf "%.5lf", rand($b - $a) + $a;
             }
+
+            die "Unknown domain atom type: $atom->[0]";
         } else {
             die "Unkown domain atom ref: $ref";
         }
