@@ -59,22 +59,28 @@ around BUILDARGS => sub {
                     my $name = $col->[0];
                     my $type = $col->[1];
 
+                    my ($domain, $attrs);
+
                     if ($type eq 'refs') {
                         my $target = $col->[2];
                         $deps{"$table_name.$name"} =
                             $target->[0] . '.' . $target->[1];
-                    } elsif (! $types{$type}) {
-                        die "column type $type not defined.\n";
-                    }
-
-                    my $domain = $col->[2];
-                    if (@$domain == 0) {
-                        $domain = undef;
+                        $attrs = $col->[3];
                     } else {
-                        $domain = $domain->[0];
+                        if (! $types{$type}) {
+                            die "column type $type not defined.\n";
+                        }
+
+                        $domain = $col->[2];
+                        if (@$domain == 0) {
+                            $domain = undef;
+                        } else {
+                            $domain = $domain->[0];
+                        }
+
+                        $attrs = $col->[3];
                     }
 
-                    my $attrs = $col->[3];
                     $cols{"$table_name.$name"} = {
                         type => $type,
                         domain => $domain,

@@ -15,6 +15,8 @@ has 'ast' => (is => 'ro', isa => 'Cheater::AST');
 has '_samples' => (is => 'ro', isa => 'HashRef');
 has '_cols_visited' => (is => 'ro', isa => 'HashRef');
 
+sub pick_elems ($$$);
+
 sub gen_txt_col ($$$$$$);
 sub gen_num_col ($$$$$$);
 sub gen_domain_val ($);
@@ -93,16 +95,6 @@ sub gen_column {
 
     my $rows = $goals->{$table};
 
-    if (my $dep = $deps->{$qcol}) {
-        $cols_visited->{$qcol} = $dep;
-        my ($dep_table, $dep_col_name) = split /\./, $dep, 2;
-        if (! $cols->{$dep}) {
-            die "ERROR: Column $qcol references non-existent column $dep.\n";
-        }
-        my $refs_data = $self->gen_column($dep_table, $dep_col_name);
-        return pick_elems($refs_data, $rows);
-    }
-
     my $spec = $cols->{$qcol} or
         die "Column spec not found for $qcol\n";
 
@@ -111,6 +103,16 @@ sub gen_column {
 
     my $attrs = $spec->{attrs};
     my $domain = $spec->{domain};
+
+    if (my $dep = $deps->{$qcol}) {
+        $cols_visited->{$qcol} = $dep;
+        my ($dep_table, $dep_col_name) = split /\./, $dep, 2;
+        if (! $cols->{$dep}) {
+            die "ERROR: Column $qcol references non-existent column $dep.\n";
+        }
+        my $refs_data = $self->gen_column($dep_table, $dep_col_name);
+        return pick_elems($refs_data, $attrs, $rows);
+    }
 
     given ($type) {
         when ('text') {
@@ -171,14 +173,31 @@ sub gen_column {
     }
 }
 
-sub pick_elems ($$) {
-    my ($set, $m) = @_;
+sub pick_elems ($$$) {
+    my ($set, $attrs, $m) = @_;
+
+    my $not_null;
+    for (@$attrs) {
+        if ($_ eq 'not null') {
+            $not_null = 1;
+            last;
+        }
+    }
+
     my $n = @$set;
     my @res;
     for (1..$m) {
+        if (! $not_null) {
+            if ((int rand 10) == 0) {
+                push @res, undef;
+                next;
+            }
+        }
+
         my $i = int rand $n;
         push @res, $set->[$i];
     }
+
     return \@res;
 }
 

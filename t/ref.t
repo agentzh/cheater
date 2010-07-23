@@ -12,7 +12,7 @@ run_tests;
 
 __DATA__
 
-=== TEST 1: datetime
+=== TEST 1: int ref
 --- src
 table dogs (
     id serial 1..50;
@@ -22,26 +22,28 @@ table cats (
     id serial;
     friend references dogs.id;
 )
-3 dogs;
-6 cats;
+4 dogs;
+7 cats;
 --- out
 cats
       id      friend
-      96371   38
-      170828  18
-      577303  19
-      749901  38
-      785799  38
-      870465  19
+      96371   44
+      170828  37
+      577303  NULL
+      692194  20
+      749901  23
+      785799  44
+      870465  20
 dogs
       id      age
-      18      215538
-      19      -416996
-      38      -44175
+      20      -224492
+      23      -239639
+      37      424094
+      44      -64078
 
 
 
-=== TEST 2: datetime
+=== TEST 2: text ref
 --- src
 table dogs (
     id serial 1..50;
@@ -51,20 +53,55 @@ table cats (
     id serial;
     friend_grades references dogs.grades;
 )
-3 dogs;
-6 cats;
+4 dogs;
+8 cats;
 --- out
 cats
       id      friend_grades
-      96371   C
-      170828  D
-      577303  B
-      749901  D
+      96371   B
+      170828  B
+      368766  D
+      577303  D
+      692194  B
+      749901  NULL
       785799  B
-      870465  B
+      870465  D
 dogs
       id      grades
-      9       D
-      14      B
-      48      C
+      6       B
+      16      D
+      22      A
+      27      B
+
+
+
+=== TEST 3: text ref (not null on foreign keys)
+--- src
+table dogs (
+    id serial 1..50;
+    grades text /[A-E]/ not null;
+)
+table cats (
+    id serial;
+    friend_grades references dogs.grades not null;
+)
+4 dogs;
+8 cats;
+--- out
+cats
+      id      friend_grades
+      96371   A
+      170828  B
+      368766  B
+      577303  B
+      692194  D
+      749901  D
+      785799  B
+      870465  D
+dogs
+      id      grades
+      7       B
+      8       D
+      44      A
+      48      B
 

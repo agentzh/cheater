@@ -26,8 +26,8 @@ table_definition: 'table' <commit> table_name '('
         | <error>
 
 column_definition:
-        column_name 'references' <commit> qualified_column ';'
-            { [$item[1], 'refs', $item[4]] }
+        column_name 'references' <commit> qualified_column attribute(s?) ';'
+            { [ $item[1], 'refs', $item[4], $item[5] ] }
     |  column_name type domain(?) attribute(s?) ';'
             { [$item[1], $item[2], $item[3], $item[4] ] }
     | <error>
