@@ -46,3 +46,39 @@ cats
       2011-06-06
       2011-02-19
 
+
+
+=== TEST 3: date (not null, asc)
+--- src
+table cats (
+    birthday date asc not null;
+)
+
+5 cats;
+--- out
+cats
+      birthday
+      2010-08-27
+      2010-09-23
+      2011-02-19
+      2011-04-23
+      2011-06-06
+
+
+
+=== TEST 4: date (not null, desc)
+--- src
+table cats (
+    birthday date desc not null;
+)
+
+5 cats;
+--- out
+cats
+      birthday
+      2011-06-06
+      2011-04-23
+      2011-02-19
+      2010-09-23
+      2010-08-27
+
