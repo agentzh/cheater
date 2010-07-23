@@ -147,7 +147,7 @@ users
 
 
 
-=== TEST 8: empty domain
+=== TEST 8: empty domain enum
 --- src
 table users (
     name text {} unique;

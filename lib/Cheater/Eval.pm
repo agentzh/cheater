@@ -6,13 +6,14 @@ use Moose;
 #use Smart::Comments;
 use Data::Random qw( rand_chars );
 use Parse::RandGen::Regexp ();
+use Scalar::Util qw( looks_like_number );
 
 has 'ast' => (is => 'ro', isa => 'Cheater::AST');
 has '_samples' => (is => 'ro', isa => 'HashRef');
 has '_cols_visited' => (is => 'ro', isa => 'HashRef');
 
 sub gen_txt_col ($$$$$);
-sub gen_int_col ($$$$$);
+sub gen_num_col ($$$$$$);
 sub gen_domain_val ($);
 
 sub BUILD {
@@ -112,18 +113,18 @@ sub gen_column {
             return $data;
         }
         when ('integer') {
-            my $data = gen_int_col($table, $col_name, $domain, $attrs, $rows);
+            my $data = gen_num_col($table, $col_name, $domain, $attrs, $rows, 'i');
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('serial') {
             push @$attrs, 'serial';
-            my $data = gen_int_col($table, $col_name, $domain, $attrs, $rows);
+            my $data = gen_num_col($table, $col_name, $domain, $attrs, $rows, 'i');
             $samples->{$qcol} = $data;
             return $data;
         }
-        when ('number') {
-            my $data = gen_num_col($table, $col_name, $attrs, $domain, $rows);
+        when ('real') {
+            my $data = gen_num_col($table, $col_name, $attrs, $domain, $rows, 'r');
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -157,10 +158,14 @@ sub gen_int ($) {
         (int rand 1_000_000) - 500_000;
 }
 
-sub gen_int_col ($$$$$) {
-    my ($table, $col_name, $domain, $attrs, $n) = @_;
+sub gen_num_col ($$$$$$) {
+    my ($table, $col_name, $domain, $attrs, $n, $type) = @_;
 
-    my ($unique, $sort, $not_null, $unsigned);
+    my ($unique, $sort, $not_null, $unsigned, $empty_domain);
+
+    if ($domain && @$domain == 0) {
+        $empty_domain = 1;
+    }
 
     ### $domain
     ### $attrs
@@ -186,11 +191,20 @@ sub gen_int_col ($$$$$) {
         }
     }
 
+    if ($empty_domain && $not_null) {
+        die "table $table, column $col_name: empty domain {} hates \"not null\".\n";
+    }
+
     my @nums;
     my %hist;
     for (1..$n) {
         if ($unique) {
+            my $i = 0;
             while (1) {
+                if (++$i > 10_000) {
+                    die "ERROR: Too many attempts failed for table $table, column $col_name.\n";
+                }
+
                 my $gen_null;
                 if (!$not_null) {
                     $gen_null = (int rand 10) == 0;
@@ -199,8 +213,29 @@ sub gen_int_col ($$$$$) {
                         last;
                     }
                 }
-                if (!$gen_null) {
-                    my $num = gen_int($unsigned);
+
+                if (! $gen_null) {
+                    my $num;
+                    if (defined $domain) {
+                        $num = gen_domain_val($domain);
+                        if (!defined $num) {
+                            if ($not_null) {
+                                die "table $table, column $col_name: not null hates {} domain.\n";
+                            }
+
+                            push @nums, $num;
+                            last;
+                        }
+
+                        if (! looks_like_number($num)) {
+                            $num = 0;
+                        } else {
+                            $num = int $num if defined $num && $type eq 'i';
+                        }
+                    } else {
+                        $num = $type eq 'i' ? gen_int($unsigned) : gen_real($unsigned);
+                    }
+
                     if (! $hist{$num}) {
                         push @nums, $num;
                         $hist{$num} = 1;
@@ -220,7 +255,20 @@ sub gen_int_col ($$$$$) {
         }
 
         if (! $gen_null) {
-            my $num = gen_int($unsigned);
+            my $num;
+            if (defined $domain) {
+                $num = gen_domain_val($domain);
+                if (defined $num) {
+                    if (! looks_like_number($num)) {
+                        $num = 0;
+                    } else {
+                        $num = int $num if $type eq 'i';
+                    }
+                }
+            } else {
+                $num = $type eq 'i' ? gen_int($unsigned) : gen_real($unsigned);
+            }
+
             push @nums, $num;
         }
     }
@@ -230,10 +278,6 @@ sub gen_int_col ($$$$$) {
     }
 
     return \@nums;
-}
-
-sub gen_num_col ($$$$) {
-    my ($table, $col_name, $attrs, $n) = @_;
 }
 
 sub gen_txt_col ($$$$$) {
@@ -263,7 +307,11 @@ sub gen_txt_col ($$$$$) {
     my %hist;
     for (1..$n) {
         if ($unique) {
+            my $i = 0;
             while (1) {
+                if (++$i > 10_000) {
+                    die "ERROR: Too many attempts failed for table $table, column $col_name.\n";
+                }
                 #warn "unique looping";
                 my $gen_null;
                 if (! $not_null) {
@@ -278,6 +326,10 @@ sub gen_txt_col ($$$$$) {
                     if (defined $domain) {
                         $txt = gen_domain_val($domain);
                         if (!defined $txt) {
+                            if ($not_null) {
+                                die "table $table, column $col_name: not null hates {} domain.\n";
+                            }
+
                             push @txts, $txt;
                             last;
                         }
