@@ -4,7 +4,7 @@ use 5.010001;
 use Moose;
 
 #use Smart::Comments;
-use Data::Random qw( rand_chars );
+use Data::Random qw( rand_chars rand_date );
 use Parse::RandGen::Regexp ();
 use Scalar::Util qw( looks_like_number );
 
@@ -12,7 +12,7 @@ has 'ast' => (is => 'ro', isa => 'Cheater::AST');
 has '_samples' => (is => 'ro', isa => 'HashRef');
 has '_cols_visited' => (is => 'ro', isa => 'HashRef');
 
-sub gen_txt_col ($$$$$);
+sub gen_txt_col ($$$$$$);
 sub gen_num_col ($$$$$$);
 sub gen_domain_val ($);
 
@@ -111,7 +111,10 @@ sub gen_column {
 
     given ($type) {
         when ('text') {
-            my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows);
+            my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
+                sub { join '', rand_chars( set => 'all', min => 5, max => 16 );
+                },
+            );
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -132,7 +135,15 @@ sub gen_column {
             $samples->{$qcol} = $data;
             return $data;
         }
+        when ('date') {
+            my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
+                \&rand_date);
+            $samples->{$qcol} = $data;
+            return $data;
+        }
         default {
+            die "Type $type not defined.\n";
+            # TODO
             my $type_def = $types->{$type};
             if (! $type_def) {
                 die "Type $type not defined for table $table column $col_name.\n";
@@ -199,6 +210,10 @@ sub gen_num_col ($$$$$$) {
 
         if ($_ eq 'unsigned') {
             $unsigned = 1;
+        }
+
+        if ($_ eq 'sorted') {
+            $sort = 1;
         }
     }
 
@@ -289,14 +304,14 @@ sub gen_num_col ($$$$$$) {
     }
 
     if ($sort) {
-        @nums = sort @nums;
+        @nums = sort { $a <=> $b } @nums;
     }
 
     return \@nums;
 }
 
-sub gen_txt_col ($$$$$) {
-    my ($table, $col_name, $domain, $attrs, $n) = @_;
+sub gen_txt_col ($$$$$$) {
+    my ($table, $col_name, $domain, $attrs, $n, $gen) = @_;
 
     my ($unique, $sort, $not_null, $empty_domain);
 
@@ -304,13 +319,17 @@ sub gen_txt_col ($$$$$) {
         $empty_domain = 1;
     }
 
-    for my $attr (@$attrs) {
-        if ($attr eq 'not null') {
+    for (@$attrs) {
+        if ($_ eq 'not null') {
             $not_null = 1;
         }
 
-        if ($attr eq 'unique') {
+        if ($_ eq 'unique') {
             $unique = 1;
+        }
+
+        if ($_ eq 'sorted') {
+            $sort = 1;
         }
     }
 
@@ -350,8 +369,7 @@ sub gen_txt_col ($$$$$) {
                         }
                         #warn "txt: $txt";
                     } else {
-                        $txt = join '',
-                            rand_chars( set => 'all', min => 5, max => 16 );
+                        $txt = $gen->();
                     }
 
                     if (! $hist{$txt}) {
@@ -377,8 +395,7 @@ sub gen_txt_col ($$$$$) {
             if (defined $domain) {
                 $txt = gen_domain_val($domain);
             } else {
-                $txt = join '',
-                    rand_chars( set => 'all', min => 5, max => 16 );
+                $txt = $gen->();
             }
             push @txts, $txt;
         }

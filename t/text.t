@@ -6,7 +6,7 @@ use warnings;
 use t::Cheater;
 
 plan tests => 1 * blocks();
-#no_diff;
+no_diff;
 
 run_tests;
 
@@ -23,12 +23,12 @@ table users (
 --- out
 users
       id      name
-      170828  %Fx})Bo"&
-      577303  opE/_b
-      749901  t*Ea.S(oC@~kVLY
-      785799  6?]Z);
-      870465  @TbE%2Y5$s(y~&67
-      96371   NULL
+      96371   %Fx})Bo"&
+      170828  opE/_b
+      577303  t*Ea.S(oC@~kVLY
+      749901  6?]Z);
+      785799  @TbE%2Y5$s(y~&67
+      870465  NULL
 
 
 
@@ -43,12 +43,12 @@ table users (
 --- out
 users
       id      name
-      170828  &%xB}7S$)y"oF
-      577303  Nz27e'
-      749901  *SVCH@cX~YELk.
-      785799  6Fq+S2;]zR)/
-      870465  y%i~e
-      96371   k1K'cIT0%*
+      96371   &%xB}7S$)y"oF
+      170828  Nz27e'
+      577303  *SVCH@cX~YELk.
+      749901  6Fq+S2;]zR)/
+      785799  y%i~e
+      870465  k1K'cIT0%*
 
 
 

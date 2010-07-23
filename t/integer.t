@@ -30,16 +30,34 @@ table users (
 5 users;
 --- out
 users
-       id
-       170828
-       577303
-       749901
-       870465
-       96371
+      id
+      96371
+      170828
+      577303
+      749901
+      870465
 
 
 
-=== TEST 3: integer and null
+=== TEST 3: simple
+--- src
+table users (
+    id integer sorted unique not null;
+)
+
+5 users;
+--- out
+users
+   id
+   -403629
+   -329172
+   77303
+   249901
+   370465
+
+
+
+=== TEST 4: integer and null
 --- src
 table users (
     id integer;
@@ -57,7 +75,7 @@ users
 
 
 
-=== TEST 4: integer w/o null
+=== TEST 5: integer w/o null
 --- src
 table users (
     id integer not null;
@@ -75,7 +93,7 @@ users
 
 
 
-=== TEST 5: enum simple integers
+=== TEST 6: enum simple integers
 --- src
 table users (
     name integer {1, 3, 5, 7} not null;
@@ -96,7 +114,7 @@ users
 
 
 
-=== TEST 6: enum simple nums
+=== TEST 7: enum simple nums
 --- src
 table users (
     name integer {-3.1,-1,1.5,3} not null;
@@ -117,7 +135,7 @@ users
 
 
 
-=== TEST 7: enum (mixture)
+=== TEST 8: enum (mixture)
 --- src
 table users (
     name integer {18, -9.1, /[a-c]{3}/, 1..2} not null;
@@ -129,7 +147,7 @@ table users, column name: "bcc" does not look like a number.
 
 
 
-=== TEST 8: enum unique
+=== TEST 9: enum unique
 --- src
 table users (
     name integer {'abc','bcd','c','d'} not null;
@@ -141,7 +159,7 @@ table users, column name: "abc" does not look like a number.
 
 
 
-=== TEST 9: regex
+=== TEST 10: regex
 --- src
 table users (
     name integer /\d{2}/ not null unique;
@@ -158,7 +176,7 @@ users
 
 
 
-=== TEST 10: empty domain enum
+=== TEST 11: empty domain enum
 --- src
 table users (
     name integer {} unique;
@@ -175,7 +193,7 @@ users
 
 
 
-=== TEST 11: int range
+=== TEST 12: int range
 --- src
 table users (
     name integer 1..3 unique;
@@ -192,7 +210,7 @@ users
 
 
 
-=== TEST 12: real range
+=== TEST 13: real range
 --- src
 table users (
     name integer 1.0..3.0 unique;
@@ -209,7 +227,7 @@ users
 
 
 
-=== TEST 13: int range (negative numbers)
+=== TEST 14: int range (negative numbers)
 --- src
 table users (
     name integer -3..-1 unique;
@@ -226,7 +244,7 @@ users
 
 
 
-=== TEST 14: real range (negative numbers)
+=== TEST 15: real range (negative numbers)
 --- src
 table users (
     name integer -2.0..-1.5 unique;

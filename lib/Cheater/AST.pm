@@ -26,6 +26,7 @@ around BUILDARGS => sub {
         text    => ['core'],
         serial  => ['core'],
         real    => ['core'],
+        date    => ['core'],
     );
 
     for my $stmt (@$parse_tree) {
