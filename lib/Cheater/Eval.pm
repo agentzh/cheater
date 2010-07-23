@@ -16,6 +16,9 @@ sub gen_txt_col ($$$$$);
 sub gen_num_col ($$$$$$);
 sub gen_domain_val ($);
 
+sub gen_int ($);
+sub gen_real ($);
+
 sub BUILD {
     my $self = shift;
     $self->{_samples} = {};
@@ -124,7 +127,8 @@ sub gen_column {
             return $data;
         }
         when ('real') {
-            my $data = gen_num_col($table, $col_name, $attrs, $domain, $rows, 'r');
+            #warn "HERE";
+            my $data = gen_num_col($table, $col_name, $domain, $attrs, $rows, 'r');
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -158,6 +162,12 @@ sub gen_int ($) {
         (int rand 1_000_000) - 500_000;
 }
 
+sub gen_real ($) {
+    my $unsigned = shift;
+    return $unsigned ? (rand 1_000_000) :
+        (rand 1_000_000) - 500_000;
+}
+
 sub gen_num_col ($$$$$$) {
     my ($table, $col_name, $domain, $attrs, $n, $type) = @_;
 
@@ -169,6 +179,7 @@ sub gen_num_col ($$$$$$) {
 
     ### $domain
     ### $attrs
+    #warn "type: $type\n";
 
     for (@$attrs) {
         if ($_ eq 'serial') {
@@ -229,10 +240,11 @@ sub gen_num_col ($$$$$$) {
 
                         if (! looks_like_number($num)) {
                             $num = 0;
-                        } else {
-                            $num = int $num if defined $num && $type eq 'i';
+                        } elsif ($type eq 'i') {
+                            $num = int $num;
                         }
                     } else {
+                        #warn "Type: $type";
                         $num = $type eq 'i' ? gen_int($unsigned) : gen_real($unsigned);
                     }
 

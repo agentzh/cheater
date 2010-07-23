@@ -3,6 +3,7 @@ package t::Cheater;
 use Test::Base -Base;
 
 #use Smart::Comments;
+use lib 'lib';
 use Cheater;
 
 #$::RD_HINT = 1;
