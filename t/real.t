@@ -30,7 +30,25 @@ users
 
 
 
-=== TEST 2: real w/o null
+=== TEST 2: real and sorted
+--- src
+table users (
+    id real sorted;
+)
+
+5 users;
+--- out
+users
+      id
+      NULL
+      77303.5067951077
+      192194.15345864
+      249901.980484964
+      373904.076861809
+
+
+
+=== TEST 3: real w/o null
 --- src
 table users (
     id real not null;
@@ -48,7 +66,7 @@ users
 
 
 
-=== TEST 3: enum simple reals
+=== TEST 4: enum simple reals
 --- src
 table users (
     name real {1, 3, 5, 7} not null;
@@ -69,7 +87,7 @@ users
 
 
 
-=== TEST 4: enum simple nums
+=== TEST 5: enum simple nums
 --- src
 table users (
     name real {-3.1,-1,1.5,3} not null;
@@ -90,7 +108,7 @@ users
 
 
 
-=== TEST 5: enum (mixture)
+=== TEST 6: enum (mixture)
 --- src
 table users (
     name real {18, -9.1, /[a-c]{3}/, 1..2} not null;
@@ -102,7 +120,7 @@ table users, column name: "bcc" does not look like a number.
 
 
 
-=== TEST 6: enum unique
+=== TEST 7: enum unique
 --- src
 table users (
     name real {'abc','bcd','c','d'} not null;
@@ -114,7 +132,7 @@ table users, column name: "abc" does not look like a number.
 
 
 
-=== TEST 7: regex
+=== TEST 8: regex
 --- src
 table users (
     name real /\d{1}\.\d{2}/ not null unique;
@@ -131,7 +149,7 @@ users
 
 
 
-=== TEST 8: empty domain enum
+=== TEST 9: empty domain enum
 --- src
 table users (
     name real {} unique;
@@ -148,7 +166,7 @@ users
 
 
 
-=== TEST 9: int range
+=== TEST 10: int range
 --- src
 table users (
     name real 1..3 unique;
@@ -165,7 +183,7 @@ users
 
 
 
-=== TEST 10: real range
+=== TEST 11: real range
 --- src
 table users (
     name real 1.0..3.0 unique;
@@ -182,7 +200,7 @@ users
 
 
 
-=== TEST 11: int range (negative numbers)
+=== TEST 12: int range (negative numbers)
 --- src
 table users (
     name real -3..-1 unique;
@@ -199,7 +217,7 @@ users
 
 
 
-=== TEST 12: real range (negative numbers)
+=== TEST 13: real range (negative numbers)
 --- src
 table users (
     name real -2.0..-1.5 unique;

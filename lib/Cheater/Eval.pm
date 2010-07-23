@@ -304,7 +304,11 @@ sub gen_num_col ($$$$$$) {
     }
 
     if ($sort) {
-        @nums = sort { $a <=> $b } @nums;
+        @nums = sort {
+            my $aa = $a // 0;
+            my $bb = $b // 0;
+            $aa <=> $bb
+        } @nums;
     }
 
     return \@nums;
@@ -400,6 +404,14 @@ sub gen_txt_col ($$$$$$) {
             push @txts, $txt;
         }
     } # for loop
+
+    if ($sort) {
+        @txts = sort {
+            my $aa = $a // 'NULL';
+            my $bb = $b // 'NULL';
+            $aa cmp $bb
+        } @txts;
+    }
 
     return \@txts;
 }

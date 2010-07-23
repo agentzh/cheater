@@ -39,7 +39,7 @@ users
 
 
 
-=== TEST 3: simple
+=== TEST 3: simple sorted
 --- src
 table users (
     id integer sorted unique not null;
