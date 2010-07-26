@@ -80,6 +80,8 @@ sub gen_goal {
 sub gen_column {
     my ($self, $table, $col_name) = @_;
 
+    #warn "gen column $table.$col_name...\n";
+
     my $samples = $self->_samples;
     my $cols_visited = $self->_cols_visited;
 
@@ -111,13 +113,17 @@ sub gen_column {
     my $domain = $spec->{domain};
 
     if (my $dep = $deps->{$qcol}) {
+        #warn "setting $qcol rely on $dep...\n";
+
         $cols_visited->{$qcol} = $dep;
         my ($dep_table, $dep_col_name) = split /\./, $dep, 2;
         if (! $cols->{$dep}) {
             die "ERROR: Column $qcol references non-existent column $dep.\n";
         }
         my $refs_data = $self->gen_column($dep_table, $dep_col_name);
-        return pick_elems($refs_data, $attrs, $rows);
+        my $data = pick_elems($refs_data, $attrs, $rows);
+        $samples->{$qcol} = $data;
+        return $data;
     }
 
     given ($type) {
@@ -184,6 +190,8 @@ sub gen_column {
             return $data;
         }
     }
+
+    # impossible to reach here...
 }
 
 sub pick_elems ($$$) {

@@ -9,11 +9,12 @@ spec: statement(s) eof
 
 eof: /^\Z/
 
-statement: table_definition { $item[1] }
+statement: table_definition /;?/ { $item[1] }
          | relation_definition ';' { $item[1] }
          | rows_definition ';' { $item[1] }
          | type_definition ';' { $item[1] }
          | include_statement ';' { $item[1] }
+         | <error>
 
 include_statement: 'include' <commit> file_name
         { ['include', parse_included_file($item[3], $thisline)] }

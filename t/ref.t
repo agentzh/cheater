@@ -105,3 +105,81 @@ dogs
       44      A
       48      B
 
+
+
+=== TEST 4: text refs in parallel
+--- src
+table dogs (
+    id serial 1..50;
+    grades text /[A-E]/ not null;
+)
+table cats (
+    id serial;
+    friend_grades references dogs.grades not null;
+)
+table birds (
+    id serial;
+    foo references dogs.grades not null;
+);
+4 dogs;
+4 cats;
+4 birds;
+--- out
+birds
+      id      foo
+      96371   B
+      170828  B
+      749901  D
+      870465  B
+cats
+      id      friend_grades
+      163189  B
+      568585  B
+      867719  A
+      959066  B
+dogs
+      id      grades
+      7       B
+      8       B
+      44      D
+      48      A
+
+
+
+=== TEST 5: text refs in series
+--- src
+table dogs (
+    id serial 1..50;
+    grades text /[A-E]/ not null;
+)
+table cats (
+    id serial;
+    friend_grades references dogs.grades not null;
+)
+table birds (
+    id serial;
+    foo references cats.friend_grades not null;
+);
+4 dogs;
+4 cats;
+4 birds;
+--- out
+birds
+      id      foo
+      96371   D
+      170828  B
+      749901  B
+      870465  B
+cats
+      id      friend_grades
+      260361  B
+      275508  B
+      435922  D
+      924094  B
+dogs
+      id      grades
+      7       B
+      8       B
+      44      D
+      48      A
+
