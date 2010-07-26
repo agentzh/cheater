@@ -8,14 +8,12 @@ statement: table_definition { $item[1] }
          | rows_definition ';' { $item[1] }
          | type_definition ';' { $item[1] }
          | include_statement ';' { $item[1] }
-         | <error>
 
 include_statement: 'include' <commit> file_name
         { [$item[1], $item[3]] }
-        | <error>
+        | <error?> <reject>
 
-file_name: "'" /(?:[^']|\\.)+/ "'"
-        { $item[1] . $item[2] . $item[3] }
+file_name: string
 
 table_name: identifier
 
@@ -23,14 +21,14 @@ table_definition: 'table' <commit> table_name '('
             column_definition(s)
         ')'
             { ['table', $item[3], $item[5]] }
-        | <error>
+        | <error?> <reject>
 
 column_definition:
         column_name 'references' <commit> qualified_column attribute(s?) ';'
             { [ $item[1], 'refs', $item[4], $item[5] ] }
     |  column_name type domain(?) attribute(s?) ';'
             { [$item[1], $item[2], $item[3], $item[4] ] }
-    | <error>
+    | <error?> <reject>
 
 column_name: identifier
 
@@ -38,48 +36,61 @@ type: identifier
 
 attribute: 'unique' | 'unsigned' | 'asc' | 'desc'
     | 'not' <commit> 'null' { "$item[1] $item[3]" }
+    | <error?> <reject>
 
 domain: enum
       | atom { [ $item[1] ] }
 
 enum: '{' <commit> atom(s? /,/) '}'
         { $item[3] }
-    | <error>
+    | <error?> <reject>
 
 atom: range
     | number
     | regex
     | string
     | int
-    | <error>
 
 string: "'" <commit> /(?:[^']|\\.)*/ "'"
         { eval "'$item[3]'" }
       | '"' <commit> /(?:[^"]|\\.)*/ '"'
         { eval qq{"$item[3]"} }
-      | <error>
 
 relation_definition: qualified_column  'refs' <commit> qualified_column
-    | <error>
+    | <error?> <reject>
 
 qualified_column: table_name '.' <commit> column_name
         { [$item[1], $item[4]] }
-    | <error>
+    | <error?> <reject>
 
 rows_definition: /\d+/ <commit> table_name
                     { ['rows', $item[1], $item[3]] }
-               | <error>
+               | <error?> <reject>
 
 type_definition: 'type' <commit> type '=' type domain(?) attribute(s?)
                     {
                         ['type', $item[3], $item[4], $item[5], $item[6]] }
-               | <error>
+               | <error?> <reject>
 
 regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
         { my $re = eval 'qr/' . $item[3] . '/'; if ($@) { die "Bad regex: $@"; } $re }
 
 range: number '..' <commit> number
-        { ['range', $item[1], $item[4]] }
+        { ['nrange', $item[1], $item[4]] }
+     | date '..' <commit> date
+        { ['drange', $item[1], $item[4]] }
+     | time '..' <commit> time
+        { ['trange', $item[1], $item[4]] }
+     | datetime '..' <commit> datetime
+        { ['dtrange', $item[1], $item[4]] }
+     | <error?> <reject>
+
+date: /\b\d{4}-\d{2}-\d{2}\b/
+
+time: /\b\d{2}:\d{2}:\d{2}\b/
+    | /\b\d{2}:\d{2}\b(?!:)/ { "$item[1]:00" }
+
+datetime: date time { "$item[1] $item[2]" }
 
 number: real
       | int

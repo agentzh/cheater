@@ -82,3 +82,37 @@ cats
       04:05:59
       02:18:46
 
+
+
+=== TEST 4: time range domain
+--- src
+table cats (
+    birthday time 05:30..08:45 not null;
+)
+
+5 cats;
+--- out
+cats
+      birthday
+      07:56:14
+      08:19:45
+      08:03:14
+      06:41:54
+      07:55:18
+
+
+
+=== TEST 4: time range domain (sec?)
+--- src
+table cats (
+    birthday time 05:30:01 .. 05:30:03 unique not null;
+)
+
+3 cats;
+--- out
+cats
+      birthday
+      05:30:03
+      05:30:02
+      05:30:01
+

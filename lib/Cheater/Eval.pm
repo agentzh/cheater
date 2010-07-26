@@ -4,12 +4,18 @@ use 5.010001;
 use Moose;
 
 #use Smart::Comments;
+use Date::Calc qw( Localtime );
 use Data::Random qw(
     rand_chars
     rand_date rand_time rand_datetime
 );
 use Parse::RandGen::Regexp ();
 use Scalar::Util qw( looks_like_number );
+
+sub get_today ();
+
+our $NowDate = 'now';
+our $NowDatetime = 'now';
 
 has 'ast' => (is => 'ro', isa => 'Cheater::AST');
 has '_samples' => (is => 'ro', isa => 'HashRef');
@@ -142,7 +148,7 @@ sub gen_column {
         }
         when ('date') {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
-                \&rand_date);
+                sub { rand_date(min => $NowDate) });
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -154,7 +160,7 @@ sub gen_column {
         }
         when ('datetime') {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
-                \&rand_datetime);
+                sub { rand_datetime(min => $NowDatetime); });
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -557,22 +563,55 @@ sub gen_domain_val ($) {
             $atom = Parse::RandGen::Regexp->new($atom);
             return $atom->pick;
         } elsif ($ref eq 'ARRAY') {
-            if ($atom->[0] eq 'range') {
-                my $a = $atom->[1];
-                my $b = $atom->[2];
+            given ($atom->[0]) {
+                when ('nrange') {
+                    my $a = $atom->[1];
+                    my $b = $atom->[2];
 
-                if ($b < $a) {
-                    die "Bad range: $a .. $b: $b < $a\n";
-                }
-                if ($a =~ /^-?\d+$/ && $b =~ /^-?\d+$/) {
-                    # pure integer
-                    return int(rand($b - $a + 1)) + $a;
-                }
+                    if ($b < $a) {
+                        die "Bad range: $a .. $b: $b < $a\n";
+                    }
+                    if ($a =~ /^-?\d+$/ && $b =~ /^-?\d+$/) {
+                        # pure integer
+                        return int(rand($b - $a + 1)) + $a;
+                    }
 
-                return sprintf "%.5lf", rand($b - $a) + $a;
+                    return sprintf "%.5lf", rand($b - $a) + $a;
+                }
+                when ('drange') {
+                    my $a = $atom->[1];
+                    my $b = $atom->[2];
+
+                    if ($b lt $a) {
+                        die "Bad date range: $a .. $b: $b is earlier than $a\n";
+                    }
+
+                    return rand_date( min => $a, max => $b );
+                }
+                when ('trange') {
+                    my $a = $atom->[1];
+                    my $b = $atom->[2];
+
+                    if ($b lt $a) {
+                        die "Bad time range: $a .. $b: $b is earlier than $a\n";
+                    }
+
+                    return rand_time( min => $a, max => $b);
+                }
+                when ('dtrange') {
+                    my $a = $atom->[1];
+                    my $b = $atom->[2];
+
+                    if ($b lt $a) {
+                        die "Bad datetime range: $a .. $b: $b is earlier than $a\n";
+                    }
+
+                    return rand_datetime( min => $a, max => $b);
+                }
+                default {
+                    die "Unknown domain atom type: $atom->[0]";
+                }
             }
-
-            die "Unknown domain atom type: $atom->[0]";
         } else {
             die "Unkown domain atom ref: $ref";
         }

@@ -5,6 +5,8 @@ use warnings;
 
 use t::Cheater;
 
+$Cheater::Eval::NowDate = '2010-07-23';
+
 plan tests => 1 * blocks();
 no_diff;
 
@@ -81,4 +83,40 @@ cats
       2011-02-19
       2010-09-23
       2010-08-27
+
+
+
+=== TEST 5: date range domain
+--- src
+table cats (
+    birthday date 2010-02-01..2010-02-03;
+)
+
+5 cats;
+--- out
+cats
+      birthday
+      2010-02-01
+      2010-02-03
+      2010-02-03
+      2010-02-02
+      2010-02-02
+
+
+
+=== TEST 6: date range domain (spanning two months)
+--- src
+table cats (
+    birthday date 2010-01-25..2010-02-03;
+)
+
+5 cats;
+--- out
+cats
+      birthday
+      2010-01-25
+      2010-02-01
+      2010-02-02
+      2010-01-28
+      2010-01-28
 
