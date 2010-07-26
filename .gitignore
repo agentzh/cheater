@@ -47,3 +47,4 @@ reindex
 *.php
 lib/Cheater/Parser.pm
 admin-layout.pl
+t/tmp

@@ -31,6 +31,14 @@ around BUILDARGS => sub {
         datetime => 1,
     );
 
+    my $n;
+    do {{
+        $n = @$parse_tree;
+        @$parse_tree = map {
+            $_->[0] eq 'include' ? @{ $_->[1] } : $_
+        } @$parse_tree;
+    }} while (@$parse_tree > $n);
+
     for my $stmt (@$parse_tree) {
         #say $stmt->[0];
         my $typ = $stmt->[0];

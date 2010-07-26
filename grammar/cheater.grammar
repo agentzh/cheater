@@ -1,3 +1,9 @@
+{
+    use Cheater::Parser::Util qw( parse_included_file );
+
+    $Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
+}
+
 spec: statement(s) eof
         { $item[1] }
 
@@ -10,7 +16,7 @@ statement: table_definition { $item[1] }
          | include_statement ';' { $item[1] }
 
 include_statement: 'include' <commit> file_name
-        { [$item[1], $item[3]] }
+        { ['include', parse_included_file($item[3], $thisline)] }
         | <error?> <reject>
 
 file_name: string

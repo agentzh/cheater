@@ -39,6 +39,8 @@ sub run_test ($) {
         bail_out("$name - No --- out specified");
     }
 
+    write_user_files($block);
+
     my $parse_tree = $parser->spec($src) or
         bail_out("$name - Failed to parse --- src due to grammatic errors");
 
@@ -77,4 +79,54 @@ sub run_tests () {
         run_test($block);
     }
 }
+
+sub write_user_files ($) {
+    my $block = shift;
+
+    my $name = $block->name;
+
+    if ($block->user_files) {
+        if (!-d 't/tmp/') {
+            mkdir 't/tmp/', 0700 or bail_out "Failed to create t/tmp/: $!";
+        }
+
+        my $raw = $block->user_files;
+
+        open my $in, '<', \$raw;
+
+        my @files;
+        my ($fname, $body);
+        while (<$in>) {
+            if (/>>> (\S+)/) {
+                if ($fname) {
+                    push @files, [$fname, $body];
+                }
+
+                $fname = $1;
+                undef $body;
+            } else {
+                $body .= $_;
+            }
+        }
+
+        if ($fname) {
+            push @files, [$fname, $body];
+        }
+
+        for my $file (@files) {
+            my ($fname, $body) = @$file;
+            #warn "write file $fname with content [$body]\n";
+
+            if (!defined $body) {
+                $body = '';
+            }
+
+            open my $out, ">t/tmp/$fname" or
+                die "$name - Cannot open tmp/$fname for writing: $!\n";
+            print $out $body;
+            close $out;
+        }
+    }
+}
+
 

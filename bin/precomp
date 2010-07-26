@@ -6,8 +6,6 @@ use warnings;
 use File::Copy qw( move );
 use Parse::RecDescent;
 
-$Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
-
 my $infile = shift or usage();
 my $outfile = shift or usage();
 
