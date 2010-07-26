@@ -120,3 +120,15 @@ cats
       2010-05-24 03:45:22
       2010-05-24 03:45:45
 
+
+
+=== TEST 7: bad datetime from domain definition
+--- src
+table cats (
+    birthday time 5..6;
+)
+
+3 cats;
+--- err
+table cats, column birthday: Bad domain value "5" for the column type.
+

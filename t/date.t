@@ -120,3 +120,15 @@ cats
       2010-01-28
       2010-01-28
 
+
+
+=== TEST 7: bad date from domain definition
+--- src
+table cats (
+    birthday time /\d+/;
+)
+
+3 cats;
+--- err
+table cats, column birthday: Bad domain value "7638743723" for the column type.
+

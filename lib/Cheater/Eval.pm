@@ -23,7 +23,7 @@ has '_cols_visited' => (is => 'ro', isa => 'HashRef');
 
 sub pick_elems ($$$);
 
-sub gen_txt_col ($$$$$$);
+sub gen_txt_col ($$$$$$$);
 sub gen_num_col ($$$$$$);
 sub gen_domain_val ($);
 
@@ -125,6 +125,7 @@ sub gen_column {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
                 sub { join '', rand_chars( set => 'all', min => 5, max => 16 );
                 },
+                undef,
             );
             $samples->{$qcol} = $data;
             return $data;
@@ -148,19 +149,25 @@ sub gen_column {
         }
         when ('date') {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
-                sub { rand_date(min => $NowDate) });
+                sub { rand_date(min => $NowDate) },
+                qr/^\d{4}-\d{2}-\d{2}$/,
+            );
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('time') {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
-                \&rand_time);
+                \&rand_time,
+                qr/^\d{2}:\d{2}:\d{2}$/,
+            );
             $samples->{$qcol} = $data;
             return $data;
         }
         when ('datetime') {
             my $data = gen_txt_col($table, $col_name, $domain, $attrs, $rows,
-                sub { rand_datetime(min => $NowDatetime); });
+                sub { rand_datetime(min => $NowDatetime); },
+                qr/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+            );
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -369,8 +376,8 @@ sub gen_num_col ($$$$$$) {
     return \@nums;
 }
 
-sub gen_txt_col ($$$$$$) {
-    my ($table, $col_name, $domain, $attrs, $n, $gen) = @_;
+sub gen_txt_col ($$$$$$$) {
+    my ($table, $col_name, $domain, $attrs, $n, $gen, $check) = @_;
 
     my ($unique, $asc, $desc, $not_null, $empty_domain);
 
@@ -434,6 +441,9 @@ sub gen_txt_col ($$$$$$) {
                             push @txts, $txt;
                             last;
                         }
+                        if (defined $check and $txt !~ $check) {
+                            die "table $table, column $col_name: Bad domain value \"$txt\" for the column type.\n";
+                        }
                         #warn "txt: $txt";
                     } else {
                         $txt = $gen->();
@@ -461,6 +471,9 @@ sub gen_txt_col ($$$$$$) {
             my $txt;
             if (defined $domain) {
                 $txt = gen_domain_val($domain);
+                if (defined $txt and defined $check and $txt !~ $check) {
+                    die "table $table, column $col_name: Bad domain value \"$txt\" for the column type.\n";
+                }
             } else {
                 $txt = $gen->();
             }

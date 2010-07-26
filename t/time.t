@@ -84,7 +84,7 @@ cats
 
 
 
-=== TEST 4: time range domain
+=== TEST 5: time range domain
 --- src
 table cats (
     birthday time 05:30..08:45 not null;
@@ -102,7 +102,7 @@ cats
 
 
 
-=== TEST 4: time range domain (sec?)
+=== TEST 6: time range domain (sec?)
 --- src
 table cats (
     birthday time 05:30:01 .. 05:30:03 unique not null;
@@ -115,4 +115,16 @@ cats
       05:30:03
       05:30:02
       05:30:01
+
+
+
+=== TEST 7: bad time from domain definition
+--- src
+table cats (
+    birthday time 'abc';
+)
+
+3 cats;
+--- err
+table cats, column birthday: Bad domain value "abc" for the column type.
 
