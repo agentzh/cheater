@@ -10,11 +10,15 @@ spec: statement(s) eof
 eof: /^\Z/
 
 statement: table_definition /;?/ { $item[1] }
-         | relation_definition ';' { $item[1] }
          | rows_definition ';' { $item[1] }
          | type_definition ';' { $item[1] }
          | include_statement ';' { $item[1] }
+         | table_assignment ';' { $item[1] }
          | <error>
+
+table_assignment: table_name '=' <commit> table_name
+            { [ 'table_assign', $item[1], $item[4] ] }
+                | <error?> <reject>
 
 include_statement: 'include' <commit> file_name
         { ['include', parse_included_file($item[3], $thisline)] }
@@ -62,9 +66,6 @@ string: "'" <commit> /(?:[^']|\\.)*/ "'"
         { eval "'$item[3]'" }
       | '"' <commit> /(?:[^"]|\\.)*/ '"'
         { eval qq{"$item[3]"} }
-
-relation_definition: qualified_column  'refs' <commit> qualified_column
-    | <error?> <reject>
 
 qualified_column: table_name '.' <commit> column_name
         { [$item[1], $item[4]] }

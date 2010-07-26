@@ -66,7 +66,7 @@ sub gen_goal {
 
     my @cols_data;
     my $tb_spec = $tables->{$table} or
-        die "Cannot found table $table.\n";
+        die "Table $table not defined.\n";
 
     for my $col (@$tb_spec) {
         #say "col: ", $col->[0];
@@ -531,7 +531,7 @@ sub stringify_table {
     ### $ast
 
     my $tb_spec = $tables->{$table} or
-        die "Cannot found table $table.\n";
+        die "Table $table not defined.\n";
 
     my $s = '';
 

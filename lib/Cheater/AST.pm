@@ -2,6 +2,9 @@ package Cheater::AST;
 
 use 5.010001;
 use Moose;
+use Clone qw(clone);
+
+sub process_table ($$$$$$);
 
 has 'goals' => (is => 'ro', isa => 'HashRef');
 has 'cols' => (is => 'ro', isa => 'HashRef');
@@ -61,43 +64,24 @@ around BUILDARGS => sub {
             when ('table') {
                 my $table_name  = $stmt->[1];
                 my $table = $stmt->[2];
-                $tables{$table_name} = $table;
-                for my $col (@$table) {
-                    #say "col: ", $col->[0];
-                    my $name = $col->[0];
-                    my $type = $col->[1];
+                process_table($table_name, $table, \%tables, \%deps, \%cols, \%types);
+            }
+            when ('table_assign') {
+                my $lhs = $stmt->[1];
+                my $rhs = $stmt->[2];
 
-                    my ($domain, $attrs);
+                my $table = $tables{$rhs};
 
-                    if ($type eq 'refs') {
-                        my $target = $col->[2];
-                        $deps{"$table_name.$name"} =
-                            $target->[0] . '.' . $target->[1];
-                        $attrs = $col->[3];
-                    } else {
-                        if (! $types{$type}) {
-                            die "column type $type not defined.\n";
-                        }
-
-                        $domain = $col->[2];
-                        if (@$domain == 0) {
-                            $domain = undef;
-                        } else {
-                            $domain = $domain->[0];
-                        }
-
-                        $attrs = $col->[3];
-                    }
-
-                    $cols{"$table_name.$name"} = {
-                        type => $type,
-                        domain => $domain,
-                        attrs => $attrs,
-                    };
+                if (!defined $table) {
+                    die "ERROR: $lhs = $rhs: Table $rhs not defined yet.\n";
                 }
+
+                my $new_table = clone($table);
+
+                process_table($lhs, $new_table, \%tables, \%deps, \%cols, \%types);
             }
             default {
-                warn "unknown statement type: $typ\n";
+                warn "WARN: Unknown statement type: $typ\n";
             }
         }
     }
@@ -110,5 +94,44 @@ around BUILDARGS => sub {
         types   => \%types,
     };
 };
+
+sub process_table ($$$$$$) {
+    my ($table_name, $table, $tables, $deps, $cols, $types) = @_;
+
+    $tables->{$table_name} = $table;
+    for my $col (@$table) {
+        #say "col: ", $col->[0];
+        my $name = $col->[0];
+        my $type = $col->[1];
+
+        my ($domain, $attrs);
+
+        if ($type eq 'refs') {
+            my $target = $col->[2];
+            $deps->{"$table_name.$name"} =
+                $target->[0] . '.' . $target->[1];
+            $attrs = $col->[3];
+        } else {
+            if (! $types->{$type}) {
+                die "column type $type not defined.\n";
+            }
+
+            $domain = $col->[2];
+            if (@$domain == 0) {
+                $domain = undef;
+            } else {
+                $domain = $domain->[0];
+            }
+
+            $attrs = $col->[3];
+        }
+
+        $cols->{"$table_name.$name"} = {
+            type => $type,
+            domain => $domain,
+            attrs => $attrs,
+        };
+    }
+}
 
 1;
