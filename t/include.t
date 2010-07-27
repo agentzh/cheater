@@ -6,6 +6,9 @@ use warnings;
 use t::Cheater;
 
 plan tests => 1 * blocks();
+
+$Cheater::Eval::NowDate = '2010-07-26';
+
 no_diff;
 
 run_tests;
