@@ -16,6 +16,8 @@ my $grammar = do { local $/; <$in> };
 
 close $in;
 
+$Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
+
 Parse::RecDescent->Precompile($grammar, "Cheater::Parser") or
     die "Failed to precompile the grammar";
 

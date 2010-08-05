@@ -1,7 +1,5 @@
 {
     use Cheater::Parser::Util qw( parse_included_file );
-
-    $Parse::RecDescent::skip = '\s*(?:(?:\#[^\n]*|/\*.*?\*/)\s*)*';
 }
 
 spec: statement(s) eof

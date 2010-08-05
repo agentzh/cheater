@@ -641,4 +641,40 @@ sub gen_domain_val ($) {
     return $atom;
 }
 
+sub canonicalize_table {
+    my ($self, $table, $cols) = @_;
+
+    my $ast = $self->ast;
+    my $tables = $ast->tables;
+
+    my $tb_spec = $tables->{$table} or
+        die "Table $table not defined.\n";
+
+    my @col_names;
+
+    for my $col (@$tb_spec) {
+        #say "col: ", $col->[0];
+        push @col_names, $col->[0];
+    }
+
+    my @rows = (\@col_names);
+
+    if (!@$cols) {
+        return \@rows;
+    }
+
+    my $col = $cols->[0];
+    my $nrows = @$col;
+
+    for my $i (0 .. $nrows - 1) {
+        my @row;
+        for my $col (@$cols) {
+            push @row, $col->[$i];
+        }
+        push @rows, \@row;
+    }
+
+    return \@rows;
+}
+
 1;

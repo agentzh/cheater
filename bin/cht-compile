@@ -1,0 +1,75 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use lib 'lib';
+
+use Cheater;
+use JSON::XS;
+use File::Slurp qw( write_file );
+use Getopt::Std;
+
+my %opts;
+getopts('hv', \%opts) or usage();
+
+if ($opts{h}) {
+    usage();
+}
+
+sub usage {
+    die "Usage: $0 <infile>\n";
+}
+
+my $json_xs = JSON::XS->new;
+
+my $infile = shift or usage();
+
+open my $in, $infile or
+    die "Cannot open $infile for reading: $!\n";
+
+my $src = do { local $/; <$in> };
+
+close $in;
+
+if ($opts{v}) {
+    $::RD_TRACE = 1;
+}
+
+my $parser = Cheater::Parser->new;
+
+$Parse::RecDescent::skip = qr{\s*\#[^\n]*\s*};
+
+my $parse_tree = $parser->spec($src) or
+    die "Failed to parse $infile due to grammatic errors\n";
+
+my $ast = Cheater::AST->new($parse_tree) or
+    die "Cannot construct the AST\n";
+
+my $eval = Cheater::Eval->new(ast => $ast);
+
+my $computed  = $eval->go;
+
+my $outdir = './data';
+if (! -d $outdir) {
+    mkdir $outdir or
+        die "Failed to create directory $outdir: $!\n";
+}
+
+for my $table (sort keys %$computed) {
+    my $data = $eval->canonicalize_table($table, $computed->{$table});
+
+    my @rows;
+    for my $row (@$data) {
+        push @rows, $json_xs->encode($row);
+    }
+
+    my $outfile = "$outdir/$table.json";
+
+    my $json = "[" . join(",\n", @rows) . "]";
+
+    write_file($outfile, $json);
+
+    warn "Wrote $outfile\n";
+}
+
