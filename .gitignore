@@ -50,3 +50,7 @@ admin-layout.pl
 t/tmp
 data/
 Makefile
+MANIFEST.bak
+pm_to_blib
+blib/
+sql/
