@@ -10,9 +10,13 @@ all_from            ('lib/Cheater.pm');
 
 requires            ('JSON::XS');
 requires            ('File::Slurp');
+requires            ('Date::Calc');
+requires            ('Data::Random');
+requires            ('Parse::RandGen::Regexp');
+requires            ('Moose');
+requires            ('Clone');
+requires            ('Parse::RecDescent');
 
-build_requires      ('JSON::XS');
-requires            ('File::Slurp');
 #build_requires      ('Test::Base' => '0.54');
 
 use_test_base;
