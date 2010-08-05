@@ -64,7 +64,7 @@ for my $table (sort keys %$computed) {
         push @rows, $json_xs->encode($row);
     }
 
-    my $outfile = "$outdir/$table.json";
+    my $outfile = "$outdir/$table.rows.json";
 
     my $json = "[" . join(",\n", @rows) . "]";
 
