@@ -1,0 +1,29 @@
+---
+abstract: 'Generate random database based on rules'
+author:
+  - 'Agent Zhang <agentzh@gmail.com>'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
+  JSON::XS: 0
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
+distribution_type: module
+generated_by: 'Module::Install version 0.99'
+license: bsd
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Cheater
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  File::Slurp: 0
+  Filter::Util::Call: 0
+  JSON::XS: 0
+  perl: 5.10.1
+resources:
+  license: http://opensource.org/licenses/bsd-license.php
+  repository: http://github.com/agentzh/cheater
+version: 0.01
