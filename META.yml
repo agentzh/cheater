@@ -4,7 +4,6 @@ author:
   - 'Agent Zhang <agentzh@gmail.com>'
 build_requires:
   ExtUtils::MakeMaker: 6.42
-  JSON::XS: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
@@ -19,11 +18,17 @@ no_index:
     - inc
     - t
 requires:
+  Clone: 0
+  Data::Random: 0
+  Date::Calc: 0
   File::Slurp: 0
   Filter::Util::Call: 0
   JSON::XS: 0
+  Moose: 0
+  Parse::RandGen::Regexp: 0
+  Parse::RecDescent: 0
   perl: 5.10.1
 resources:
   license: http://opensource.org/licenses/bsd-license.php
   repository: http://github.com/agentzh/cheater
-version: 0.01
+version: 0.02
