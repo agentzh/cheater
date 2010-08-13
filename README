@@ -1,0 +1,26 @@
+Description
+    This toolkit provides a language as well as a few utility programs
+    to generate random faked databases from a schema file written
+    in a special language.
+
+Installation
+    perl Makefile.PL
+    make
+    make test
+    sudo make install
+
+Usage
+    cd ~/some-work-directory
+    cht-compile /path/to/samples/sanity.cht
+    cht-rows2sql data/*.rows.json
+
+See the demo .cht file
+
+    http://github.com/agentzh/cheater/blob/master/samples/sanity.cht
+
+as well as the (declarative) test suite
+
+    http://github.com/agentzh/cheater/blob/master/samples/sanity.cht
+
+for more features and use cases.
+
