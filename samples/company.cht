@@ -1,0 +1,21 @@
+# Empolyee table
+table employees (
+    id serial;
+    name text /[A-Z][a-z]{2,5} [A-Z][a-z]{2,7}/ not null unique;
+    age integer 18..60 not null;
+    tel text /1[35]8\d{8}/;
+    birthday date;
+    height real 1.50 .. 1.90 not null;
+    grades text {'A','B','C','D','E'} not null;
+    department references departments.id;
+)
+
+# Department table
+table departments (
+    id serial;
+    name text /\w{2,10}/ not null;
+)
+
+10 employees;
+2 departments;
+
