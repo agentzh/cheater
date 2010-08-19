@@ -4,6 +4,7 @@ Description
     in a special language.
 
 Installation
+    make -f mk
     perl Makefile.PL
     make
     make test
@@ -20,7 +21,7 @@ See the demo .cht file
 
 as well as the (declarative) test suite
 
-    http://github.com/agentzh/cheater/blob/master/samples/sanity.cht
+    http://github.com/agentzh/cheater/blob/master/t/
 
 for more features and use cases.
 
