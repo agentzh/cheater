@@ -4,6 +4,8 @@ Description
     in a special language.
 
 Installation
+    You should have perl 5.10.1+ installed first.
+
     make -f mk
     perl Makefile.PL
     make
