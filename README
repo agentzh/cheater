@@ -17,9 +17,9 @@ Usage
     cht-compile /path/to/samples/sanity.cht
     cht-rows2sql data/*.rows.json
 
-See the demo .cht file
+See the demo .cht files
 
-    http://github.com/agentzh/cheater/blob/master/samples/sanity.cht
+    http://github.com/agentzh/cheater/blob/master/samples/
 
 as well as the (declarative) test suite
 
