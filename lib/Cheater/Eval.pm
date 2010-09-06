@@ -677,4 +677,49 @@ sub canonicalize_table {
     return \@rows;
 }
 
+sub gen_table_schema {
+    my ($self, $table) = @_;
+
+    my $ast = $self->ast;
+    my $deps = $ast->deps;
+    my $tables = $ast->tables;
+    my $cols = $ast->cols;
+
+    my $tb_spec = $tables->{$table} or
+        die "Table $table not defined.\n";
+
+    my @col_defs;
+
+    for my $col (@$tb_spec) {
+        use Data::Dumper;
+
+        my $name = $col->[0];
+        my $qcol = "$table.$name";
+        my $spec = $cols->{$qcol};
+        my $type = $spec->{type};
+
+        while ($type eq 'refs') {
+            my $dep = $deps->{$qcol};
+
+            my $col = $cols->{$dep};
+            $type = $col->{type};
+        }
+
+        #say "type: $type";
+        #say Dumper($spec);
+        my @attrs = grep { $_ =~ /^(?:not null|unique)$/ } @{ $spec->{attrs} };
+
+        push @col_defs, {
+            name => $name,
+            type => $type,
+            attrs => \@attrs,
+        }
+    }
+
+    return {
+        name => $table,
+        cols => \@col_defs,
+    };
+}
+
 1;

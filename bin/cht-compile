@@ -57,19 +57,29 @@ if (! -d $outdir) {
 }
 
 for my $table (sort keys %$computed) {
-    my $data = $eval->canonicalize_table($table, $computed->{$table});
+    {
+        my $schema = $eval->gen_table_schema($table);
 
-    my @rows;
-    for my $row (@$data) {
-        push @rows, $json_xs->encode($row);
+        my $json = $json_xs->encode($schema);
+
+        my $outfile = "$outdir/$table.schema.json";
+        write_file($outfile, $json);
+        warn "Wrote $outfile\n";
     }
 
-    my $outfile = "$outdir/$table.rows.json";
+    {
+        my $data = $eval->canonicalize_table($table, $computed->{$table});
 
-    my $json = "[" . join(",\n", @rows) . "]";
+        my @rows;
+        for my $row (@$data) {
+            push @rows, $json_xs->encode($row);
+        }
 
-    write_file($outfile, $json);
+        my $json = "[" . join(",\n", @rows) . "]";
 
-    warn "Wrote $outfile\n";
+        my $outfile = "$outdir/$table.rows.json";
+        write_file($outfile, $json);
+        warn "Wrote $outfile\n";
+    }
 }
 
