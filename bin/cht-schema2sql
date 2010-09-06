@@ -1,0 +1,91 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use lib 'lib';
+
+use File::Slurp qw( write_file );
+use JSON::XS;
+use Getopt::Std;
+
+my %opts;
+getopts('hn', \%opts) or usage();
+
+if ($opts{h}) {
+    usage();
+}
+
+my $be_nice = $opts{n};
+
+sub usage {
+    die "Usage: $0 [-h] [-n] <infile>...
+Options:
+    -h      print this help
+    -n      be nice, don't drop table before create table in the output SQL
+";
+}
+
+if (!@ARGV) {
+    usage();
+}
+
+my $json_xs = JSON::XS->new;
+
+my $outdir = './sql';
+if (! -d $outdir) {
+    mkdir $outdir or
+        die "Failed to create directory $outdir: $!\n";
+}
+
+for my $infile (@ARGV) {
+    process_file($infile);
+}
+
+sub process_file {
+    my $infile = shift;
+
+    my ($table) = ($infile =~ /(\w+)\.schema\.json$/);
+
+    if (!$table) {
+        die "Bad input file name: $infile\n";
+    }
+
+    #warn "Processing table $table...\n";
+
+    open my $in, $infile or
+        die "Cannot open $infile for reading: $!\n";
+
+    my $json = do { local $/; <$in> };
+
+    close $in;
+
+    my $cols = $json_xs->decode($json);
+
+    if (!$cols || ref $cols ne 'ARRAY' || !@$cols) {
+        die "Bad schema data in $infile.\n";
+    }
+
+    my $sql = '';
+
+    unless ($be_nice) {
+        $sql = "drop table if exists $table;\n";
+    }
+
+    for my $col (@$cols) {
+        if ($col->{name} eq 'id') {
+            push @{ $col->{attrs} }, 'primary key';
+        }
+    }
+
+    $sql .= "create table $table (\n" .
+        join(",\n",
+            (map { "    $_->{name} $_->{type}" . (@{ $_->{attrs} } ? ' ' . join(' ', @{ $_->{attrs} }) : '') } @$cols)) .
+        "\n);\n";
+
+    my $outfile = "$outdir/$table.schema.sql";
+
+    write_file $outfile, $sql;
+    warn "Wrote $outfile\n";
+}
+

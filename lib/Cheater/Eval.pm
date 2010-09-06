@@ -716,10 +716,7 @@ sub gen_table_schema {
         }
     }
 
-    return {
-        name => $table,
-        cols => \@col_defs,
-    };
+    return \@col_defs,
 }
 
 1;
