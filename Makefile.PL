@@ -25,6 +25,7 @@ no_index( directory => qw< t inc doc share demo > );
 
 install_script      ('bin/cht-compile');
 install_script      ('bin/cht-rows2sql');
+install_script      ('bin/cht-schema2sql');
 
 auto_install();
 repository 'http://github.com/agentzh/cheater';
