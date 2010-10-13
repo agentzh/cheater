@@ -1,6 +1,6 @@
 package Cheater::AST;
 
-use 5.010001;
+use 5.010000;
 use Moose;
 use Clone qw(clone);
 

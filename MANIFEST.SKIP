@@ -25,3 +25,9 @@ MANIFEST.bak
 ^data/
 \.tar\.gz$
 ^sql/
+t/pod-coverage.t
+t/pod.t
+\.json$
+\.sql$
+\.mobi$
+genmobi\.sh$

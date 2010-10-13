@@ -1,3 +1,6 @@
+0.03 Wed 13 Oct 2010 11:06:56 AM CST
+    - added cht-schema2sql and mysql DDL generation support.
+
 0.02 Thu 05 Aug 2010 09:06:34 PM CST
     - Initial packaging
 

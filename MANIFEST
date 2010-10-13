@@ -44,3 +44,6 @@ t/ref.t
 t/text.t
 t/time.t
 Changes
+README
+samples/company.cht
+bin/cht-schema2sql

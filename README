@@ -1,35 +1,6 @@
-Description
-    This toolkit provides a language as well as a few utility programs
-    to generate random faked databases from a schema file written
-    in a special language.
+NAME
+    Cheater - Generate random database based on rules
 
-Installation
-    You should have perl 5.10.1+ installed first.
-
-    make -f mk
-    perl Makefile.PL
-    make
-    make test
-    sudo make install
-
-Usage
-    cd ~/some-work-directory
-    cht-compile /path/to/samples/sanity.cht
-    cht-rows2sql data/*.rows.json
-
-See the demo .cht files
-
-    http://github.com/agentzh/cheater/blob/master/samples/
-
-as well as the (declarative) test suite
-
-    http://github.com/agentzh/cheater/blob/master/t/
-
-for more features and use cases.
-
-See also my blog post:
-
-    http://agentzh.spaces.live.com/blog/cns!FF3A735632E41548!596.entry
-
-(it's in Chinese though :P)
+AUTHOR
+    Yichun Zhang "<agentzh@gmail.com>"
 
