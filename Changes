@@ -1,3 +1,6 @@
+0.04 2010-10-14
+    - fixed a bug in schema generation when references are involved.
+
 0.03 Wed 13 Oct 2010 11:06:56 AM CST
     - added cht-schema2sql and mysql DDL generation support.
 

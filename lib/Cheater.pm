@@ -4,7 +4,7 @@ use Cheater::Parser;
 use Cheater::AST;
 use Cheater::Eval;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 1;
 __END__
