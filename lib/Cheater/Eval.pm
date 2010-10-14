@@ -691,18 +691,23 @@ sub gen_table_schema {
     my @col_defs;
 
     for my $col (@$tb_spec) {
-        use Data::Dumper;
+        #use Data::Dumper;
 
         my $name = $col->[0];
         my $qcol = "$table.$name";
         my $spec = $cols->{$qcol};
         my $type = $spec->{type};
 
+        #say "trying type: $type";
         while ($type eq 'refs') {
+            #use Data::Dumper;
             my $dep = $deps->{$qcol};
 
             my $col = $cols->{$dep};
+            #warn Dumper($col);
             $type = $col->{type};
+            #say "trying type for $dep $col: $type";
+            $qcol = $dep;
         }
 
         #say "type: $type";

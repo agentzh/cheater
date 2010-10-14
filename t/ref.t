@@ -183,3 +183,20 @@ dogs
       44      D
       48      A
 
+
+
+=== TEST 6: int ref
+--- src
+table dogs (
+    id serial 1..50;
+    self_id references dogs.id not null;
+)
+4 dogs;
+--- out
+dogs
+      id      self_id
+      19      44
+      38      40
+      40      38
+      44      38
+

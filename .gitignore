@@ -54,3 +54,4 @@ MANIFEST.bak
 pm_to_blib
 blib/
 sql/
+Makefile.old

@@ -58,7 +58,9 @@ if (! -d $outdir) {
 
 for my $table (sort keys %$computed) {
     {
+        #warn "generating schema...\n";
         my $schema = $eval->gen_table_schema($table);
+        #warn "got schema...\n";
 
         my $json = $json_xs->encode($schema);
 
@@ -68,6 +70,7 @@ for my $table (sort keys %$computed) {
     }
 
     {
+        #warn "generating rows...\n";
         my $data = $eval->canonicalize_table($table, $computed->{$table});
 
         my @rows;
