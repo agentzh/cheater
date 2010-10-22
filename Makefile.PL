@@ -31,3 +31,9 @@ auto_install();
 repository 'http://github.com/agentzh/cheater';
 WriteAll();
 
+if ($^O =~ /Win32/i) {
+    system("nmake -f mk") or die $!;
+} else {
+    system("make -f mk") or die $!;
+}
+
