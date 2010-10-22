@@ -4,3 +4,14 @@ NAME
 AUTHOR
     Yichun Zhang "<agentzh@gmail.com>"
 
+INSTALLATION
+
+    make -f mk
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+SEE ALSO
+
+http://agentzh.spaces.live.com/blog/cns!FF3A735632E41548!596.entry
