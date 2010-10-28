@@ -33,10 +33,11 @@ table_definition: 'table' <commit> table_name '('
         | <error?> <reject>
 
 column_definition:
-        column_name 'references' <commit> qualified_column attribute(s?) ';'
+      column_name 'references' <commit> qualified_column attribute(s?) ';'
             { [ $item[1], 'refs', $item[4], $item[5] ] }
-    |  column_name type domain(?) attribute(s?) ';'
+    | column_name type domain(?) attribute(s?) ';'
             { [$item[1], $item[2], $item[3], $item[4] ] }
+    | column_name '=' column_name ';' { [$item[1], '=', $item[3]] }
     | <error?> <reject>
 
 column_name: identifier
@@ -45,6 +46,7 @@ type: identifier
 
 attribute: 'unique' | 'unsigned' | 'asc' | 'desc'
     | 'not' <commit> 'null' { "$item[1] $item[3]" }
+    | 'for' string { ['for', $item{string}] }
     | <error?> <reject>
 
 domain: enum

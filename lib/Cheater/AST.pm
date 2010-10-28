@@ -4,13 +4,14 @@ use 5.010000;
 use Moose;
 use Clone qw(clone);
 
-sub process_table ($$$$$$);
+sub process_table ($$$$$$$);
 
 has 'goals' => (is => 'ro', isa => 'HashRef');
 has 'cols' => (is => 'ro', isa => 'HashRef');
 has 'deps' => (is => 'ro', isa => 'HashRef');
 has 'types' => (is => 'ro', isa => 'HashRef');
 has 'tables' => (is => 'ro', isa => 'HashRef');
+has 'col_clones' => (is => 'ro', isa => 'HashRef');
 
 around BUILDARGS => sub {
     my $orig = shift;
@@ -20,7 +21,7 @@ around BUILDARGS => sub {
 
     #warn "BUILDARGS";
 
-    my (%tables, %cols, %deps, %goals, %types);
+    my (%tables, %cols, %deps, %goals, %types, %col_clones);
 
     my %cols_visited;
 
@@ -64,7 +65,7 @@ around BUILDARGS => sub {
             when ('table') {
                 my $table_name  = $stmt->[1];
                 my $table = $stmt->[2];
-                process_table($table_name, $table, \%tables, \%deps, \%cols, \%types);
+                process_table($table_name, $table, \%tables, \%deps, \%cols, \%types, \%col_clones);
             }
             when ('table_assign') {
                 my $lhs = $stmt->[1];
@@ -78,7 +79,7 @@ around BUILDARGS => sub {
 
                 my $new_table = clone($table);
 
-                process_table($lhs, $new_table, \%tables, \%deps, \%cols, \%types);
+                process_table($lhs, $new_table, \%tables, \%deps, \%cols, \%types, \%col_clones);
             }
             default {
                 warn "WARN: Unknown statement type: $typ\n";
@@ -92,11 +93,12 @@ around BUILDARGS => sub {
         deps    => \%deps,
         goals   => \%goals,
         types   => \%types,
+        col_clones => \%col_clones,
     };
 };
 
-sub process_table ($$$$$$) {
-    my ($table_name, $table, $tables, $deps, $cols, $types) = @_;
+sub process_table ($$$$$$$) {
+    my ($table_name, $table, $tables, $deps, $cols, $types, $col_clones) = @_;
 
     $tables->{$table_name} = $table;
     for my $col (@$table) {
@@ -111,6 +113,11 @@ sub process_table ($$$$$$) {
             $deps->{"$table_name.$name"} =
                 $target->[0] . '.' . $target->[1];
             $attrs = $col->[3];
+        } elsif ($type eq '=') {
+            my $target = $col->[2];
+            $deps->{"$table_name.$name"} =
+                "$table_name.$target";
+            $col_clones->{"$table_name.$name"} = "$table_name.$target";
         } else {
             if (! $types->{$type}) {
                 die "column type $type not defined.\n";

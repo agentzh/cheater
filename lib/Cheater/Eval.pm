@@ -90,6 +90,7 @@ sub gen_column {
     my $goals = $ast->goals;
     my $cols = $ast->cols;
     my $types = $ast->types;
+    my $col_clones = $ast->col_clones;
 
     my $qcol = "$table.$col_name";
 
@@ -121,7 +122,14 @@ sub gen_column {
             die "ERROR: Column $qcol references non-existent column $dep.\n";
         }
         my $refs_data = $self->gen_column($dep_table, $dep_col_name);
-        my $data = pick_elems($refs_data, $attrs, $rows);
+
+        my $data;
+        if ($col_clones->{$qcol} eq $dep) {
+            $data = $refs_data;
+        } else {
+            $data = pick_elems($refs_data, $attrs, $rows);
+        }
+
         $samples->{$qcol} = $data;
         return $data;
     }
