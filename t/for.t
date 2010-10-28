@@ -21,4 +21,11 @@ table cats (
 
 5 cats;
 --- out
+cats
+      birthday
+      2011-07-29
+      NULL
+      2011-05-27
+      2011-07-08
+      2011-09-12
 

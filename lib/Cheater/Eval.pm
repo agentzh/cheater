@@ -3,7 +3,7 @@ package Cheater::Eval;
 use 5.010000;
 use Moose;
 
-use Smart::Comments;
+#use Smart::Comments;
 use Date::Calc qw( Localtime );
 use Data::Random qw(
     rand_chars
