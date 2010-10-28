@@ -1,12 +1,12 @@
 # Empolyee table
 table employees (
-    id serial;
+    id serial for 'employee number';
     name text /[A-Z][a-z]{2,5} [A-Z][a-z]{2,7}/ not null unique;
     age integer 18..60 not null;
-    tel text /1[35]8\d{8}/;
+    tel text /1[35]8\d{8}/ for 'telephone number';
     birthday date;
     height real 1.50 .. 1.90 not null;
-    grades text {'A','B','C','D','E'} not null;
+    grades text {'A','B','C','D','E'} not null for '分数';
     department references departments.id;
 )
 

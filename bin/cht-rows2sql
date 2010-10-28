@@ -8,6 +8,7 @@ use lib 'lib';
 use File::Slurp qw( write_file );
 use JSON::XS;
 use Getopt::Std;
+use Cheater::Util qw( quote_sql_str );
 
 my %opts;
 getopts('h', \%opts) or usage();
@@ -70,7 +71,7 @@ sub process_file {
 
     my @lines;
     for my $row (@$rows) {
-        push @lines, "(" . join(",", map { quote_value($_) } @$row) . ")";
+        push @lines, "(" . join(",", map { quote_sql_str($_) } @$row) . ")";
     }
 
     $sql .= join ",\n", @lines;
@@ -81,22 +82,5 @@ sub process_file {
 
     write_file $outfile, $sql;
     warn "Wrote $outfile\n";
-}
-
-sub quote_value {
-    my $val = shift;
-    if (!defined $val) {
-        return 'NULL';
-    }
-    if ($val =~ /^\d+$/) {
-        return $val;
-    }
-    $val =~ s/\r/\\r/g;
-    $val =~ s/\n/\\n/g;
-    $val =~ s/\\/\\\\/g;
-    $val =~ s/'/\\'/g;
-    $val =~ s/"/\\"/g;
-    $val =~ s/\032/\\$&/g;
-    return qq{'$val'};
 }
 

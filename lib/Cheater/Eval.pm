@@ -3,7 +3,7 @@ package Cheater::Eval;
 use 5.010000;
 use Moose;
 
-#use Smart::Comments;
+use Smart::Comments;
 use Date::Calc qw( Localtime );
 use Data::Random qw(
     rand_chars
@@ -11,6 +11,7 @@ use Data::Random qw(
 );
 use Parse::RandGen::Regexp ();
 use Scalar::Util qw( looks_like_number );
+use Cheater::Util qw( quote_sql_str );
 
 sub get_today ();
 
@@ -261,26 +262,20 @@ sub gen_num_col ($$$$$$) {
             $asc = 1;
             $not_null = 1;
             $unsigned = 1;
-        }
-
-        if ($_ eq 'not null') {
+        } elsif ($_ eq 'not null') {
             $not_null = 1;
-        }
-
-        if ($_ eq 'unique') {
+        } elsif ($_ eq 'unique') {
             $unique = 1;
-        }
-
-        if ($_ eq 'unsigned') {
+        } elsif ($_ eq 'unsigned') {
             $unsigned = 1;
-        }
-
-        if ($_ eq 'asc') {
+        } elsif ($_ eq 'asc') {
             $asc = 1;
-        }
-
-        if ($_ eq 'desc') {
+        } elsif ($_ eq 'desc') {
             $desc = 1;
+        } elsif (ref $_) {
+            # do nothing
+        } else {
+            die "Unknown attribute: $_\n";
         }
     }
 
@@ -721,6 +716,14 @@ sub gen_table_schema {
         #say "type: $type";
         #say Dumper($spec);
         my @attrs = grep { $_ =~ /^(?:not null|unique)$/ } @{ $spec->{attrs} };
+
+        my ($cmt) = grep {
+            ref $_ && ref $_ eq 'ARRAY' && $_->[0] eq 'for'
+        } @{ $spec->{attrs} };
+
+        if ($cmt) {
+            push @attrs, "comment " . quote_sql_str($cmt->[1]);
+        }
 
         push @col_defs, {
             name => $name,
