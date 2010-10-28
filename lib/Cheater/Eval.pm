@@ -124,7 +124,7 @@ sub gen_column {
         my $refs_data = $self->gen_column($dep_table, $dep_col_name);
 
         my $data;
-        if ($col_clones->{$qcol} eq $dep) {
+        if ($col_clones->{$qcol} && $col_clones->{$qcol} eq $dep) {
             $data = $refs_data;
         } else {
             $data = pick_elems($refs_data, $attrs, $rows);
