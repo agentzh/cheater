@@ -24,6 +24,7 @@ inc/Test/More.pm
 lib/Cheater.pm
 lib/Cheater/AST.pm
 lib/Cheater/Eval.pm
+lib/Cheater/Util.pm
 lib/Cheater/Parser.pm
 lib/Cheater/Parser/Util.pm
 Makefile.PL
@@ -43,6 +44,8 @@ t/real.t
 t/ref.t
 t/text.t
 t/time.t
+t/col-clone.t
+t/for.t
 Changes
 README
 samples/company.cht

@@ -1,3 +1,6 @@
+0.05 2010-1028
+    - implemented the for 'comments' for table column definitions.
+
 0.04 2010-10-14
     - fixed a bug in schema generation when references are involved.
 
