@@ -11,14 +11,21 @@ use Getopt::Std;
 use Cheater::Util qw( quote_sql_str );
 
 my %opts;
-getopts('h', \%opts) or usage();
+getopts('hr', \%opts) or usage();
+
+my $keyword = $opts{r} ? 'replace' : 'insert';
 
 if ($opts{h}) {
     usage();
 }
 
 sub usage {
-    die "Usage: $0 <infile>...\n";
+    die <<"_EOC_";
+Usage: $0 [options] <infile>...\n";
+Options:
+    -h                  print this message
+    -r                  generate replace statements
+_EOC_
 }
 
 if (!@ARGV) {
@@ -66,7 +73,7 @@ sub process_file {
         die "No column names found in the first row.\n";
     }
 
-    my $sql = "insert into $table (" .
+    my $sql = "$keyword into $table (" .
         join(",", @$col_names) . ") values\n";
 
     my @lines;
