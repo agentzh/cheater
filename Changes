@@ -1,4 +1,7 @@
-0.05 2010-1028
+0.06 2010-03-09
+    - added a -r option to the cht-rows2sql script for generating "replace" statements instead of "insert".
+
+0.05 2010-10-28
     - implemented the for 'comments' for table column definitions.
 
 0.04 2010-10-14
