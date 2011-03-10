@@ -282,14 +282,15 @@ users
 --- src
 table users (
     name text /http:\/\/[a-z]{3}\d{2}/ not null unique;
+    age integer /\d{4}/ not null;
 )
 
 4 users;
 --- out
 users
-      name
-      http://wpu38
-      http://tgk85
-      http://cok98
-      http://ylu09
+      name    age
+      http://wpu38    1584
+      http://tgk85    1772
+      http://cok98    9564
+      http://ylu09    4619
 

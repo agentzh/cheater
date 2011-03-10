@@ -80,7 +80,7 @@ type_definition: 'type' <commit> type '=' type domain(?) attribute(s?)
                         ['type', $item[3], $item[4], $item[5], $item[6]] }
                | <error?> <reject>
 
-regex: /\/(?:[^\\]|\\.)*\//
+regex: /\/(?:[^\\\/]|\\.)*\//
         { my $regex = 'qr' . $item[1];
           my $re = eval $regex;
           if ($@) {
