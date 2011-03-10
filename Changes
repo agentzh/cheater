@@ -1,3 +1,6 @@
+0.08 2010-03-10
+    - fixed a regression in regex syntax.
+
 0.07 2010-03-10
     - fixed a bug in regex syntax.
 
