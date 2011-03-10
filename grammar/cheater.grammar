@@ -80,8 +80,14 @@ type_definition: 'type' <commit> type '=' type domain(?) attribute(s?)
                         ['type', $item[3], $item[4], $item[5], $item[6]] }
                | <error?> <reject>
 
-regex: '/' <commit> /(?:[^\/]|\\.)+/ '/'
-        { my $re = eval 'qr/' . $item[3] . '/'; if ($@) { die "Bad regex: $@"; } $re }
+regex: /\/(?:[^\\]|\\.)*\//
+        { my $regex = 'qr' . $item[1];
+          my $re = eval $regex;
+          if ($@) {
+              die "Bad regex on line $prevline: $regex: $@";
+          }
+          $re
+        }
 
 range: number '..' <commit> number
         { ['nrange', $item[1], $item[4]] }

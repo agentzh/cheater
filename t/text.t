@@ -276,3 +276,20 @@ users
       -1.56305
       -1.82314
 
+
+
+=== TEST 9: regex with escaped dashes
+--- src
+table users (
+    name text /http:\/\/[a-z]{3}\d{2}/ not null unique;
+)
+
+4 users;
+--- out
+users
+      name
+      http://wpu38
+      http://tgk85
+      http://cok98
+      http://ylu09
+
