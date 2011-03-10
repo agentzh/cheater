@@ -31,4 +31,4 @@ requires:
 resources:
   license: http://opensource.org/licenses/bsd-license.php
   repository: http://github.com/agentzh/cheater
-version: 0.06
+version: 0.07

@@ -1,3 +1,6 @@
+0.07 2010-03-10
+    - fixed a bug in regex syntax.
+
 0.06 2010-03-09
     - added a -r option to the cht-rows2sql script for generating "replace" statements instead of "insert".
 
