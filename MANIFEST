@@ -46,6 +46,9 @@ t/text.t
 t/time.t
 t/col-clone.t
 t/for.t
+t/pod-coverage.t
+t/pod.t
+bin/cht-compile
 Changes
 README
 samples/company.cht

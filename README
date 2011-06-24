@@ -2,27 +2,31 @@ NAME
     Cheater - Generate random database based on rules
 
 DESCRIPTION
-    Cheater is a tool that can generate random database based on rules. It's being widely used
-    within the LineZing team of Taobao.com.
+    Cheater is a tool that can generate random database based on rules. It's
+    being widely used within the LineZing team of Taobao.com.
 
     Compared to other similar tools, cheater has the following advantages:
 
-        1. it can automatically handle the association and foreign key restrictions among
-           data tables, so it's the real "database instance generator".
+    *   it can automatically handle the association and foreign key
+        restrictions among data tables, so it's the real "database instance
+        generator".
 
-        2. It defines a SQL-like little language to specify the data model that we want to generate from.
+    *   It defines a SQL-like little language to specify the data model that
+        we want to generate from.
 
-        3. It supports powerful {a, b, c} discrete enumation sets, numerical/time/date interval syntax a..b,
-           Perl regular expressions /regex/, constant values 'string', 1.32, and etc, to describe the value
-           range of data table field.
+    *   It supports powerful "{a, b, c}" discrete enumation sets,
+        numerical/time/date interval syntax "a..b", Perl regular expressions
+        "/regex/", constant values 'string', 1.32, and etc, to describe the
+        value range of data table field.
 
-        4. It can generate JSON or SQL insert statements to ease importing to RDMBSes like MySQL/PostgreSQL.
+    *   It can generate JSON or SQL insert statements to ease importing to
+        RDMBSes like MySQL/PostgreSQL.
 
     Below is a very simple example to demonstrate its basic usage.
 
-    First of all, we create a .cht input file in our working directory (say, under ~/work/),
-    in order to describe the data model that we want to geneate data from. Assuming we have
-    a company.cht file like this:
+    First of all, we create a .cht input file in our working directory (say,
+    under ~/work/), in order to describe the data model that we want to
+    geneate data from. Assuming we have a company.cht file like this:
 
         # Empolyee table
         table employees (
@@ -45,12 +49,13 @@ DESCRIPTION
         10 employees;
         2 departments;
 
-    Here we're using the little language (or DSL) defined by cheater itself. It's semantics
-    is self-evident. In particular, the last two lines state that we want to generate 10 rows
-    of data for the employees table and 2 rows for the departments table.
+    Here we're using the little language (or DSL) defined by cheater itself.
+    It's semantics is self-explanatory. In particular, the last two lines
+    state that we want to generate 10 rows of data for the "employees" table
+    and 2 rows for the "departments" table.
 
-    And then, we use the cht-compile command to compile our company.cht file to generate a
-    random database instance:
+    And then, we use the cht-compile command to compile our company.cht file
+    to generate a random database instance:
 
         $ cht-compile company.cht
         Wrote ./data/departments.schema.json
@@ -58,9 +63,10 @@ DESCRIPTION
         Wrote ./data/employees.schema.json
         Wrote ./data/employees.rows.json
 
-    We see that it generates two .json data files for the departments and employees tables,
-    respectively. For example, the data/emplyees.rows.json file on my machine resulting from
-    a particular run looks like this:
+    We see that it generates two .json data files for the "departments" and
+    "employees" tables, respectively. For example, the
+    data/emplyees.rows.json file on my machine resulting from a particular
+    run looks like this:
 
         $ cat data/employees.rows.json
         [["id","name","age","tel","birthday","height","grades","department"],
@@ -75,8 +81,9 @@ DESCRIPTION
         ["945911","Hsuz Qcmky",39,"13862516775","2011-05-31","1.75947","B","408862"],
         ["960643","Qbmbe Ijnbqsb",24,"15872418765","2011-04-11","1.78864","B","844615"]]
 
-    These are the "row data". On the other hand, ./data/employees.schema.json is the table structure
-    definition for the employees table. It looks like this on my side:
+    These are the "row data". On the other hand,
+    ./data/employees.schema.json is the table structure definition for the
+    "employees" table. It looks like this on my side:
 
         [{"attrs":[],"name":"id","type":"serial"},
         {"attrs":["not null","unique"],"name":"name","type":"text"},
@@ -87,8 +94,8 @@ DESCRIPTION
         {"attrs":["not null"],"name":"grades","type":"text"},
         {"attrs":[],"name":"department","type":"serial"}]
 
-    We can generate SQL DDL statement files accepted by RDBMSes like MySQL or PostgreSQL from the
-    .schema.json files like this:
+    We can generate SQL DDL statement files accepted by RDBMSes like MySQL
+    or PostgreSQL from the .schema.json files like this:
 
         $ cht-schema2sql data/employees.schema.json
         Wrote ./sql/employees.schema.sql
@@ -108,14 +115,16 @@ DESCRIPTION
             department serial
         );
 
-    If we want to eliminate the drop table statement in the resulting SQL file, we can
-    specify the -n option while running the cht-schema2sql utility. For instance,
+    If we want to eliminate the drop table statement in the resulting SQL
+    file, we can specify the "-n" option while running the cht-schema2sql
+    utility. For instance,
 
         $ cht-schema2sql -n data/employees.schema.json
         Wrote ./sql/employees.schema.sql
 
-    At last, we can use the cht-rows2sql command to convert those .rows.json data files to
-    .sql files that are ready for relation database systems to import the "row data".
+    At last, we can use the cht-rows2sql command to convert those .rows.json
+    data files to .sql files that are ready for relation database systems to
+    import the "row data".
 
         $ cht-rows2sql data/*.rows.json
         Wrote ./sql/departments.rows.sql
@@ -128,44 +137,42 @@ DESCRIPTION
         (408862,'dJRq7LCXL'),
         (844615,'G_m9Nkh3q');
 
-    To prevent the resulting data conflicts with extra unique key restrictions in the targeting
-    RDMBS table, we can use the -r option to make cht-rows2sql generate SQL replace statements
-    to work-around this:
+    To prevent the resulting data conflicts with extra unique key
+    restrictions in the targeting RDMBS table, we can use the "-r" option to
+    make cht-rows2sql generate SQL replace statements to work-around this:
 
         $ cht-rows2sql -r data/*.rows.json
         Wrote ./sql/departments.rows.sql
         Wrote ./sql/employees.rows.sql
 
-    Now we're ready to import the random data into database systems like MySQL!
+    Now we're ready to import the random data into database systems like
+    MySQL!
 
         $ mysql -u monty test -p < sql/departments.rows.sql
 
-    For now, cheater is still in active development and lacking comprehensive documentation,
-    the most complete documentation is its (declarative) test suite:
+    For now, cheater is still in active development and lacking
+    comprehensive documentation, the most complete documentation is its
+    (declarative) test suite:
 
-        http://github.com/agentzh/cheater/tree/master/t/
+    <http://github.com/agentzh/cheater/tree/master/t/>
 
     Open one of those .t files, you can see lots of declarative test cases.
 
 INSTALLATION
+        perl Makefile.PL
+        make
+        make test
+        make install
 
-    # NOTE!!! This is mandatory! Cheater::Parser is generated by this command
-    make -f mk
+    SOURCE REPOSITORY The source repository of this project is on GitHub:
 
-    perl Makefile.PL
-    make
-    make test
-    make install
+    <http://github.com/agentzh/cheater/>
 
-SOURCE REPOSITORY
-    The source repository of this project is on GitHub:
+    If you have found any bugs or feature request, feel free to create
+    tickets on the GitHub issues page:
 
-        http://github.com/agentzh/cheater/
-
-    If you have found any bugs or feature request, feel free to create tickets on the GitHub issues page:
-
-        http://github.com/agentzh/cheater/issues
+    <http://github.com/agentzh/cheater/issues>
 
 AUTHOR
-    Yichun Zhang "<agentzh@gmail.com>"
+    Zhang Yichun (� 亦春) "<agentzh@gmail.com>"
 
