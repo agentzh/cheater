@@ -4,7 +4,7 @@ use Cheater::Parser;
 use Cheater::AST;
 use Cheater::Eval;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 1;
 __END__
@@ -14,6 +14,10 @@ __END__
 =head1 NAME
 
 Cheater - Generate random database based on rules
+
+=head1 VERSION
+
+This document describes Cheater 0.09 released on June 24, 2011.
 
 =head1 DESCRIPTION
 

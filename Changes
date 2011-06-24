@@ -1,3 +1,7 @@
+0.09 2010-06-24
+    - added more documentation.
+    - made the first CPAN release.
+
 0.08 2010-03-10
     - fixed a regression in regex syntax.
 

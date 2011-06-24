@@ -1,6 +1,9 @@
 NAME
     Cheater - Generate random database based on rules
 
+VERSION
+    This document describes Cheater 0.09 released on June 24, 2011.
+
 DESCRIPTION
     Cheater is a tool that can generate random database based on rules. It's
     being widely used within the LineZing team of Taobao.com.
