@@ -1,0 +1,202 @@
+#!/usr/bin/perl
+
+################################################################################
+# mysql2cht - Script for generating Cheater .cht files based on existing 
+#             MySQL schema  
+#
+# @author  Ryan Lowe <rlowe@pablowe.net>
+# @date    2011-01-09
+# @license GPL v2
+#
+# TO DO
+# - Handle all mysql data types
+# - Respect foreign keys
+# - Query actual data for count, ranges, etc
+################################################################################
+
+use strict;
+use warnings FATAL => 'all';
+use Pod::Usage;
+use Getopt::Long;
+use DBD::mysql;
+
+my $VERSION = '0.0.1';
+my %OPTIONS;
+
+################################################################################
+# Get configuration information
+################################################################################
+
+# Parse command line opts
+my $gop=new Getopt::Long::Parser;
+$gop->configure('no_ignore_case','bundling');
+if (!$gop->getoptions(
+    'ask-pass'       => \$OPTIONS{'ask-pass'     },
+    'cnf=s'          => \$OPTIONS{'cnf'          },
+    'database=s'     => \$OPTIONS{'database'     },
+    'help|h'         => \$OPTIONS{'help'         },
+    'password=s'     => \$OPTIONS{'password'     },
+    'range-idx!'     => \$OPTIONS{'range-idx'    },
+    'range-no-idx!'  => \$OPTIONS{'range-no-idx' },
+    'port=i'         => \$OPTIONS{'port'         },
+    'socket|s=s'     => \$OPTIONS{'socket'       },
+    'text-an'        => \$OPTIONS{'text-an'      },
+    'timeout|t=i'    => \$OPTIONS{'timeout'      },
+    'user=s'         => \$OPTIONS{'user'         },
+    'version|V'      => \$OPTIONS{'version'      } ) ) {
+
+    pod2usage(2);
+}
+
+# Help if asked for or no check given
+pod2usage(2) if     ($OPTIONS{'help'      });
+
+# Yay for versions
+if ($OPTIONS{'version'}) {
+    print "$VERSION\n";
+    exit 0;
+}
+
+################################################################################
+# Lookups
+################################################################################
+
+my %numeric_ranges = ( 'tinyint_signed'     => { 'min' => -128,                 'max' => 127                  },
+                       'tinyint_unsigned'   => { 'min' => 0,                    'max' => 255                  },
+                       'smallint_signed'    => { 'min' => -32768,               'max' => 32767                },
+                       'smallint_unsigned'  => { 'min' => 0,                    'max' => 65535                },
+                       'mediumint_signed'   => { 'min' => -8388608,             'max' => 8388607              },
+                       'mediumint_unsigned' => { 'min' => 0,                    'max' => 16777215             },
+                       'int_signed'         => { 'min' => -2147483648,          'max' => 2147483647           },
+                       'int_unsigned'       => { 'min' => 0,                    'max' => 4294967295           },
+                       'bigint_signed'      => { 'min' => -9223372036854775808, 'max' => 9223372036854775807  },
+                       'bigint_unsigned'    => { 'min' => 0,                    'max' => 18446744073709551615 },
+                       'year'               => { 'min' => 1901,                 'max' => 2155                 } 
+                     );
+
+my $text_suffix = '';
+if ($OPTIONS{'text-an'}) {
+    $text_suffix = q{/[A-Z]{4,100}[a-z]{4,100}[0-9]{4,100}/};
+}
+
+my %type_map = ( 'tinyint'     => 'integer -128..127',
+                 'smallint'    => 'integer -32768..32767',
+                 'mediumint'   => 'integer -8388608..8388607',
+                 'int'         => 'integer -2147483648..2147483647',
+                 'bigint'      => 'integer -9223372036854775808..9223372036854775807',
+                 'timestamp'   => 'datetime',
+                 'datetime'    => 'datetime',
+                 'date'        => 'date',
+                 'year'        => 'integer 1901..2155',
+                 'varchar'     => "text $text_suffix",
+                 'text'        => "text $text_suffix",
+                 'char'        => "text $text_suffix",
+                 'longtext'    => "text $text_suffix",
+                 'mediumtext'  => "text $text_suffix",
+                 'float'       => 'real',
+                 'decimal'     => 'real',
+                 'time'        => 'time',
+               );
+
+################################################################################
+# Time to make the doughnuts
+################################################################################
+
+$OPTIONS{'timeout'} = $OPTIONS{'timeout'} ? $OPTIONS{'timeout'} : 10;
+$OPTIONS{'host'}    = $OPTIONS{'host'}    ? $OPTIONS{'host'}    : 'localhost';
+$OPTIONS{'port'}    = $OPTIONS{'port'}    ? $OPTIONS{'port'}    : '3306';
+
+# Attempt db connection
+my $connection_string  = 'DBI:mysql:';
+$connection_string    .= "mysql_read_default_file=$OPTIONS{'cnf'};" if $OPTIONS{'cnf'};
+$connection_string    .= "mysql_read_default_group=client;" if $OPTIONS{'cnf'};
+$connection_string    .= "host=$OPTIONS{'host'};";
+$connection_string    .= "database=$OPTIONS{'database'};"
+    if $OPTIONS{'database'};
+$connection_string    .= "mysql_socket=$OPTIONS{'socket'};"
+    if $OPTIONS{'socket'} and $OPTIONS{'host'} eq 'localhost';
+$connection_string    .= "port=$OPTIONS{'port'};";
+$connection_string    .= "mysql_multi_statements=1";
+
+my $dbh;
+eval {
+    local $SIG{ALRM} = sub { die 'TIMEOUT' };
+    alarm($OPTIONS{'timeout'});
+
+    $dbh = DBI->connect (
+        $connection_string,
+        $OPTIONS{'user'},
+        $OPTIONS{'password'},
+        { RaiseError => 1, PrintError => 1 }
+    );
+    alarm(0);
+};
+alarm(0);
+
+# Check for timeout
+if ( $@ ) {
+    print "Could not connect to MySQL";
+    print " in $OPTIONS{'timeout'} seconds" if ($@ eq "TIMEOUT");
+    print "\n";
+    exit 1;
+}
+
+my $sth = $dbh->prepare('SELECT @@VERSION AS version');
+$sth->execute();
+my $mysql_version = $sth->fetchrow_hashref();
+
+if (!$mysql_version->{'version'} =~ m/^5/) {
+    print "MySQL 5.0+ is required (INFORMATION_SCHEMA)\n";
+    exit 1;
+}
+
+my $defs_query = "select c.table_schema as table_schema, c.table_name, c.column_name, c.data_type, c.ordinal_position, c.is_nullable, s.non_unique, t.table_rows
+  from information_schema.tables as t
+  left join information_schema.columns as c on (t.table_schema=c.table_schema and t.table_name=c.table_name)
+  left join information_schema.statistics as s on (c.table_schema=s.table_schema and c.table_name=s.table_name and c.column_name=s.column_name) 
+   where c.table_schema='$OPTIONS{'database'}' 
+  order by c.table_schema, c.table_name, c.ordinal_position";
+
+$sth = $dbh->prepare($defs_query);
+$sth->execute();
+
+my $defs = {};
+while (my $row = $sth->fetchrow_hashref()) {
+    $defs->{$row->{'table_schema'}}->{$row->{'table_name'}}->{$row->{'ordinal_position'}}->{'column_name'} = $row->{'column_name'};
+    $defs->{$row->{'table_schema'}}->{$row->{'table_name'}}->{$row->{'ordinal_position'}}->{'data_type'} = $row->{'data_type'};
+    $defs->{$row->{'table_schema'}}->{$row->{'table_name'}}->{$row->{'ordinal_position'}}->{'ordinal_position'} = $row->{'ordinal_position'};
+    $defs->{$row->{'table_schema'}}->{$row->{'table_name'}}->{$row->{'ordinal_position'}}->{'non_unique'} = $row->{'non_unique'};
+    $defs->{$row->{'table_schema'}}->{$row->{'table_name'}}->{$row->{'ordinal_position'}}->{'is_nullable'} = $row->{'is_nullable'};
+    $defs->{$row->{'table_schema'}}->{$row->{'table_name'}}->{$row->{'ordinal_position'}}->{'table_rows'} = $row->{'table_rows'};
+}
+
+open CHT, ">", "$OPTIONS{'database'}.cht" or die $!;
+print STDERR "Creating $OPTIONS{'database'}.cht\n";
+
+while ( my ($table, $table_data) = each(%{$defs->{$OPTIONS{'database'}}}) ) {
+
+    my $position = 1;
+    my $rows = 0;
+    print CHT "# $table table\n";
+    print CHT "table $table (\n";
+
+    while ( my ( $ordinal_position, $column_data ) = each(%{$defs->{$OPTIONS{'database'}}->{$table}} ) ) {
+        my $column_def = "  $defs->{$OPTIONS{'database'}}->{$table}->{$position}->{'column_name'}";
+        $column_def .= " ".$type_map{$defs->{$OPTIONS{'database'}}->{$table}->{$position}->{'data_type'}};
+        if ($defs->{$OPTIONS{'database'}}->{$table}->{$position}->{'is_nullable'} eq 'NO') { 
+            $column_def .= " not null";
+        }
+ 
+        if (defined($defs->{$OPTIONS{'database'}}->{$table}->{$position}->{'non_unique'}) && $defs->{$OPTIONS{'database'}}->{$table}->{$position}->{'non_unique'} eq '0') {
+            $column_def .= " unique";
+        } 
+        print CHT "$column_def;\n"; 
+        $rows = $defs->{$OPTIONS{'database'}}->{$table}->{$position}->{'table_rows'};
+        $position++;
+    }
+
+    print CHT ")\n\n";
+    print CHT "$rows $table;\n\n";
+}
+
+close(CHT);
