@@ -21,7 +21,7 @@ This document describes Cheater 0.10 released on June 24, 2011.
 
 =head1 DESCRIPTION
 
-Cheater is a tool that can generate random database based on rules. It's being widely used
+Cheater is a tool that can generate random database based on rules. It was widely used
 within the LineZing team of Taobao.com.
 
 Compared to other similar tools, C<cheater> has the following advantages:
@@ -212,13 +212,11 @@ L<http://github.com/agentzh/cheater/issues>
 
 =head1 AUTHOR
 
-Zhang "agentzh" Yichun (章亦春) C<< <agentzh@gmail.com> >>
+Yichun "agentzh" Zhang (章亦春) C<< <agentzh@gmail.com> >>, CloudFlare Inc.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (c) 2010-2011, Taobao Inc., Alibaba Group (L<http://www.taobao.com>).
-
-Copyright (c) 2010-2011, Zhang "agentzh" Yichun (章亦春) C<< <agentzh@gmail.com> >>.
+Copyright (c) 2010-2013, Yichun Zhang (agentzh), CloudFlare Inc.
 
 This module is licensed under the terms of the BSD license.
 

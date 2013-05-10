@@ -5,10 +5,9 @@ author:
 build_requires:
   ExtUtils::MakeMaker: 6.59
 configure_requires:
-  ExtUtils::MakeMaker: 6.59
-distribution_type: module
-dynamic_config: 1
-generated_by: 'Module::Install version 1.06'
+  ExtUtils::MakeMaker: 0
+dynamic_config: 0
+generated_by: 'ExtUtils::MakeMaker version 6.6302, CPAN::Meta::Converter version 2.120630'
 license: bsd
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,8 +15,8 @@ meta-spec:
 name: Cheater
 no_index:
   directory:
-    - inc
     - t
+    - inc
 requires:
   Clone: 0
   Data::Random: 0
@@ -28,8 +27,5 @@ requires:
   Moose: 0
   Parse::RandGen::Regexp: 0
   Parse::RecDescent: 0
-  perl: 5.10.1
-resources:
-  license: http://opensource.org/licenses/bsd-license.php
-  repository: http://github.com/agentzh/cheater
+  perl: 5.010001
 version: 0.10
