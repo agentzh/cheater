@@ -3,16 +3,15 @@ package Test::Builder::Module;
 
 use strict;
 
-use Test::Builder;
+use Test::Builder 1.00;
 
 require Exporter;
 our @ISA = qw(Exporter);
 
-our $VERSION = '0.98';
-$VERSION = eval $VERSION;      ## no critic (BuiltinFunctions::ProhibitStringyEval)
+our $VERSION = '1.302019';
 
 
-#line 74
+#line 73
 
 sub import {
     my($class) = shift;
@@ -60,11 +59,11 @@ sub _strip_imports {
     return @imports;
 }
 
-#line 137
+#line 136
 
 sub import_extra { }
 
-#line 167
+#line 166
 
 sub builder {
     return Test::Builder->new;

@@ -201,7 +201,8 @@ Open one of those F<.t> files, you can see lots of declarative test cases, like 
   make test
   make install
 
-SOURCE REPOSITORY
+=head1 SOURCE REPOSITORY
+
 The source repository of this project is on GitHub:
 
 L<http://github.com/agentzh/cheater/>
@@ -216,7 +217,7 @@ Yichun "agentzh" Zhang (章亦春) C<< <agentzh@gmail.com> >>, CloudFlare Inc.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (c) 2010-2013, Yichun Zhang (agentzh), CloudFlare Inc.
+Copyright (c) 2010-2016, Yichun Zhang (agentzh), CloudFlare Inc.
 
 This module is licensed under the terms of the BSD license.
 

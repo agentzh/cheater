@@ -30,3 +30,4 @@ MANIFEST.bak
 \.mobi$
 genmobi\.sh$
 samples/test.cht
+^MYMETA\.

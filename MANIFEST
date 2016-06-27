@@ -50,8 +50,6 @@ t/pod-coverage.t
 t/pod.t
 bin/cht-compile
 Changes
-README
+README.md
 samples/company.cht
 bin/cht-schema2sql
-MYMETA.yml
-MYMETA.json
