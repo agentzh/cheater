@@ -33,7 +33,7 @@
       "runtime" : {
          "requires" : {
             "Clone" : "0",
-            "Data::Random" : "0",
+            "Data::Random" : "0.12",
             "Date::Calc" : "0",
             "File::Slurp" : "0",
             "Filter::Util::Call" : "0",

@@ -11,7 +11,7 @@ all_from            ('lib/Cheater.pm');
 requires            ('JSON::XS');
 requires            ('File::Slurp');
 requires            ('Date::Calc');
-requires            ('Data::Random');
+requires            ('Data::Random' => '0.12');
 requires            ('Parse::RandGen::Regexp');
 requires            ('Moose');
 requires            ('Clone');
