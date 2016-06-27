@@ -180,6 +180,9 @@ Open one of those `.t` files, you can see lots of declarative test cases, like t
 
 # INSTALLATION
 
+Currently we require at *most* perl 5.12.x and at *least* perl 5.10.1. Neither newer nor older versions
+of perl will not work.
+
     perl Makefile.PL
     make
     make test
