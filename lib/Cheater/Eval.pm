@@ -8,10 +8,13 @@ use Date::Calc qw( Localtime );
 use Data::Random qw(
     rand_chars
     rand_date rand_time rand_datetime
+    rand_image
 );
 use Parse::RandGen::Regexp ();
 use Scalar::Util qw( looks_like_number );
 use Cheater::Util qw( quote_sql_str );
+use MIME::Base64 qw( encode_base64 );
+use GD;
 
 sub get_today ();
 
@@ -183,6 +186,11 @@ sub gen_column {
                 sub { rand_datetime(min => $NowDatetime); },
                 qr/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
             );
+            $samples->{$qcol} = $data;
+            return $data;
+        }
+        when ('image') {
+            my $data = gen_image_col($table, $col_name, $domain, $attrs, $rows);
             $samples->{$qcol} = $data;
             return $data;
         }
@@ -385,6 +393,46 @@ sub gen_num_col ($$$$$$) {
     }
 
     return \@nums;
+}
+
+sub gen_image_col {
+    my ($table, $col_name, $domain, $attrs, $n) = @_;
+
+    my ($width, $height);
+
+    if ($domain && @$domain) {
+        ($width, $height) = @$domain;
+    }
+
+    my $not_null;
+
+    for (@$attrs) {
+        if ($_ eq 'not null') {
+            $not_null = 1;
+        }
+    }
+
+    my @images;
+    for (1..$n) {
+        my $gen_null;
+        if (!$not_null) {
+            $gen_null = (int rand 10) == 0;
+            if ($gen_null) {
+                push @images, undef;
+                last;
+            }
+        }
+
+        next if $gen_null;
+
+        my $png = rand_image($width ? (width => $width) : (),
+                               $height ? (height => $height) : ());
+        my $gd = GD::Image->newFromPngData($png);
+        my $jpeg = $gd->jpeg;
+        push @images, encode_base64($jpeg, "");
+    }
+
+    return \@images;
 }
 
 sub gen_txt_col ($$$$$$$) {

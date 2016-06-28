@@ -3,7 +3,8 @@
 use strict;
 use warnings;
 
-use lib 'lib';
+use FindBin;
+use lib "$FindBin::Bin/lib";
 
 use File::Slurp qw( write_file );
 use JSON::XS;

@@ -33,6 +33,7 @@ around BUILDARGS => sub {
         date     => 1,
         time     => 1,
         datetime => 1,
+        image    => 1,
     );
 
     my $n;
@@ -119,7 +120,7 @@ sub process_table ($$$$$$$) {
                 "$table_name.$target";
             $col_clones->{"$table_name.$name"} = "$table_name.$target";
         } else {
-            if (! $types->{$type}) {
+            if (!$types->{$type}) {
                 die "column type $type not defined.\n";
             }
 
