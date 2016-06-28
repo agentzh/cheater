@@ -15,6 +15,7 @@ requires            ('Data::Random' => '0.12');
 requires            ('Parse::RandGen::Regexp');
 requires            ('Moose');
 requires            ('Clone');
+requires            ('GD');
 requires            ('Parse::RecDescent');
 
 #build_requires      ('Test::Base' => '0.54');
