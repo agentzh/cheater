@@ -4,7 +4,7 @@
       "Agent Zhang <agentzh@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "ExtUtils::MakeMaker version 6.6302, CPAN::Meta::Converter version 2.120630",
+   "generated_by" : "ExtUtils::MakeMaker version 7.16, CPAN::Meta::Converter version 2.150005",
    "license" : [
       "bsd"
    ],
@@ -33,7 +33,7 @@
       "runtime" : {
          "requires" : {
             "Clone" : "0",
-            "Data::Random" : "0",
+            "Data::Random" : "0.12",
             "Date::Calc" : "0",
             "File::Slurp" : "0",
             "Filter::Util::Call" : "0",
@@ -46,5 +46,6 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.10"
+   "version" : "0.10",
+   "x_serialization_backend" : "JSON::PP version 2.27400"
 }
